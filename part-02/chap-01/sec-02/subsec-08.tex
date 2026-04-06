@@ -1,17 +1,28 @@
-\subsubsection{2.8. Framework web}
-\indent\indent Để xây dựng một hệ thống tích hợp mô hình học sâu với giao diện người dùng tương tác cao, kiến trúc ứng dụng được chia thành hai phần chính: frontend sử dụng Angular và backend sử dụng FastAPI.\vspace{0.3cm}
+\subsubsection{2.8. Thang đo hiệu năng cho dữ liệu mất cân bằng}
+\label{sec:metrics}
 
-Angular\footnote{\url{https://angular.dev/}} là một framework front-end mã nguồn mở được phát triển và duy trì bởi Google, sử dụng TypeScript làm ngôn ngữ chính và hướng đến việc xây dựng các ứng dụng web một trang (Single Page Application – SPA). Angular là bản tái thiết kế hoàn chỉnh của AngularJS, mang lại một nền tảng hiện đại với cấu trúc dự án rõ ràng, hỗ trợ tốt cho các ứng dụng quy mô lớn, phức tạp và dễ mở rộng hơn so với các phiên bản trước.\vspace{0.3cm}
+\indent\indent Trong bài toán hiện tại, dữ liệu thực tế luôn tồn tại sự chênh lệch rất lớn. Do bài toán được thiết lập dưới dạng phân loại đa lớp với $C=4$ nhãn, việc chỉ dựa vào tỷ lệ dự đoán đúng là không đủ để đánh giá toàn diện. Hệ thống đánh giá trong nghiên cứu này được xây dựng dựa trên Ma trận nhầm lẫn đa lớp (\textit{Multi-class Confusion Matrix}) \cite{fawcett2006introduction}. Kế thừa hệ thống thang đo của Sokolova và Lapalme \cite{sokolova2009systematic}, đề tài thiết lập các tiêu chuẩn đánh giá theo chiến lược "Một-chống-lại-tất-cả" (\textit{One-vs-Rest - OvR}) cho từng lớp $i$ như sau:\vspace{-0.1cm}
 
-Trong các phiên bản gần đây (như Angular 16 trở lên), framework này đã đưa vào một số cải tiến trọng tâm cho mô hình reactivity thông qua cơ chế Signals, giúp quản lý trạng thái và cập nhật giao diện hiệu quả hơn so với các cách tiếp cận truyền thống như Zone.js. Đây là một bước tiến quan trọng trong thiết kế kiến trúc của Angular, hướng tới trải nghiệm phát triển linh hoạt, tối ưu hiệu suất và dễ bảo trì.\vspace{0.3cm}
-
-Ưu điểm nổi bật của Angular so với các framework như React hay Vue nằm ở tính nguyên khối và định hướng kiến trúc rõ ràng. Angular cung cấp sẵn một hệ sinh thái đồng bộ bao gồm cơ chế định tuyến (routing), HTTP client, quản lý và kiểm tra dữ liệu biểu mẫu (form validation), cùng hệ thống dependency injection mạnh mẽ. Cách tiếp cận này giúp chuẩn hóa cấu trúc dự án, giảm sự phụ thuộc vào các thư viện bên ngoài và nâng cao tính nhất quán trong quá trình phát triển. Nhờ đó, Angular đặc biệt phù hợp với các hệ thống doanh nghiệp quy mô lớn, nơi yêu cầu cao về khả năng bảo trì, mở rộng và ổn định lâu dài.\vspace{0.3cm}
-
-Về phần backend, FastAPI\footnote{\url{https://fastapi.tiangolo.com/}} thường được lựa chọn nhờ hiệu năng vượt trội và khả năng tương thích hoàn hảo với hệ sinh thái Python (ngôn ngữ bản ngữ của AI/Machine Learning).\vspace{0.3cm}
-
-FastAPI được xây dựng trên chuẩn ASGI (Asynchronous Server Gateway Interface), cho phép xử lý bất đồng bộ các yêu cầu đồng thời, giúp giảm độ trễ khi mô hình AI thực hiện suy luận. Điểm mạnh của FastAPI bao gồm:\vspace{-0.1cm}
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item Hiệu suất cao: Tốc độ xử lý ngang ngửa với NodeJS và Go, nhờ sử dụng Starlette cho phần web và Pydantic cho phần validation dữ liệu.
-    \item Tích hợp AI dễ dàng: Vì chạy trên Python, FastAPI có thể gọi trực tiếp các thư viện PyTorch, TensorFlow hay các mô hình HuggingFace mà không cần qua các cầu nối ngôn ngữ phức tạp.
-    \item Tự động hóa tài liệu: Tự động sinh tài liệu API chuẩn OpenAPI (Swagger UI), giúp việc giao tiếp giữa đội ngũ phát triển frontend và AI engineer trở nên dễ dàng.
+    \item \textbf{Accuracy (Độ chính xác tổng thể):} Là tỷ lệ tổng số mẫu được dự đoán đúng trên toàn bộ tập dữ liệu. Trong bối cảnh phân bố lớp bất đối xứng, chỉ số này không mang tính quyết định vì mô hình chỉ cần thiên vị hoàn toàn lớp đa số (\texttt{BENIGN}) là đã có thể đạt điểm số rất cao \cite{sokolova2009systematic}. Do đó, Accuracy chỉ được sử dụng làm tham chiếu bổ trợ.
+    \[
+        \text{Accuracy} = \frac{\sum_{i=1}^{C} TP_i}{N} \quad (\text{Với } N \text{ là tổng số mẫu})
+    \]
+
+    \item \textbf{Precision (Độ chuẩn xác) của lớp $i$:} Trả lời câu hỏi: \textit{"Trong số các tài khoản bị hệ thống dự đoán thuộc nhãn $i$, có bao nhiêu phần trăm thực sự mang nhãn $i$?"}. Đặc biệt với các lớp rủi ro cao, nếu Precision thấp, hệ thống đang bắt oan (\textit{False Positive}) người dùng thực tế, gây ảnh hưởng nghiêm trọng.
+    \[
+        \text{Precision}_i = \frac{TP_i}{TP_i + FP_i}
+    \]
+
+    \item \textbf{Recall (Độ phủ) của lớp $i$:} Trả lời câu hỏi: \textit{"Trong tổng số tài khoản thực sự thuộc nhãn $i$, hệ thống đã nhận diện đúng được bao nhiêu phần trăm?"}. Đối với các nhóm \textit{bot farm} (\texttt{MALICIOUS}), nếu Recall thấp, hệ thống bị lọt lưới (\textit{False Negative}) nhiều.
+    \[
+        \text{Recall}_i = \frac{TP_i}{TP_i + FN_i}
+    \]
+
+    \item \textbf{Macro F1-Score:} Giữa Precision và Recall luôn tồn tại sự đánh đổi tự nhiên. Tương tự các nghiên cứu phát hiện Sybil đương đại \cite{liu2025detecting, heeb2024sybil}, đề tài áp dụng Macro F1-Score để tính trung bình cộng điểm F1 của toàn bộ $C$ lớp. Chỉ số này đối xử bình đẳng với mọi lớp bất chấp số lượng mẫu, ép mô hình phải hoạt động xuất sắc ở cả nhiệm vụ nhận diện được cụm Sybil lẫn bảo vệ người dùng thật.
+    \[
+        \text{F1}_i = 2 \times \frac{\text{Precision}_i \times \text{Recall}_i}{\text{Precision}_i + \text{Recall}_i} \quad ; \quad \text{Macro F1} = \frac{1}{C} \sum_{i=1}^{C} \text{F1}_i
+    \]
+
+    \item \textbf{ROC AUC Đa lớp (Multi-class AUC):} Vì đầu ra của GNN là phân phối xác suất trên 4 lớp (thông qua hàm \textit{Softmax}), việc đánh giá dựa trên một ngưỡng cứng mang tính chủ quan. Theo chứng minh của Bradley \cite{bradley1997use}, diện tích dưới đường cong ROC (AUC) đo lường khả năng phân tách của mô hình một cách khách quan. Đối với bài toán đa lớp, đề tài sử dụng chiến lược \textit{Macro-AUC (OvR)}, tính toán khả năng mô hình phân biệt một lớp cụ thể với 3 lớp còn lại, đảm bảo tính bền bỉ trước sự mất cân bằng dữ liệu.
 \end{itemize}

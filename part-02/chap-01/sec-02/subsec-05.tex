@@ -1,61 +1,72 @@
-\subsubsection{2.5. Mạng noron đồ thị (GNN)}
-\indent\indent Mạng noron đồ thị (GNN) \cite{hamilton2020graph} là một mô hình học sâu được thiết kế để xử lý dữ liệu có cấu trúc đồ thị. Mục tiêu cốt lõi của GNN là học một vector biểu diễn (embedding) cho mỗi đỉnh, cạnh hoặc toàn bộ đồ thị, sao cho vector này bảo toàn được cả đặc trưng tại các đỉnh và thông tin cấu trúc của đồ thị đó.\vspace{0.3cm}
+\subsubsection{2.5. Thuật toán phân cụm và hệ thống luật (Pseudo-labeling)}
+\indent\indent Mục tiêu của giai đoạn này là thiết lập một quy trình gán nhãn tự động dựa trên sự kết hợp giữa phân nhóm cấu trúc và các bằng chứng về hành vi. Quy trình này lấy cảm hứng từ mô hình lập trình dữ liệu và học giám sát yếu (\textit{Weak Supervision}) \cite{ratner2017snorkel}, cho phép tận dụng tri thức chuyên gia để tạo ra bộ dữ liệu huấn luyện chất lượng cao cho các mô hình học có giám sát ở giai đoạn tiếp theo.\vspace{0.3cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/part-02/chap-01/GNN.png}
-    \vspace{0.5cm}
-    \caption{Minh hoạ kiến trúc cơ bản của GNN}
-    \label{fig:GNN}
-\end{figure}
+\textbf{2.5.1. Phân cụm không giám sát với K-Means}\vspace{0.2cm}
 
-Cơ chế hoạt động nền tảng của hầu hết các GNN hiện đại là truyền thông điệp (Message Passing). Tại mỗi tầng $k$, vector đặc trưng của đỉnh $v$ được cập nhật bằng cách tổng hợp thông tin từ các đỉnh hàng xóm $N(v)$:
-\[
-    h_v^{(k)} = \text{UPDATE}^{(k)} \left( h_v^{(k-1)}, \text{AGGREGATE}^{(k)} \left( \{ h_u^{(k-1)} | u \in N(v) \} \right) \right)
-\]
-Trong đó $h_v^{(k)}$ là hidden state của đỉnh $v$ tại tầng $k$, hàm AGGREGATE có nhiệm vụ gom thông tin từ hàng xóm, và hàm UPDATE kết hợp thông tin đó với trạng thái hiện tại của đỉnh.\vspace{0.3cm}
+\indent\indent Hệ thống sử dụng thuật toán K-Means \cite{macqueen1967some} để phân nhóm các vector nhúng (\textit{node embeddings}) thu được từ bộ mã hóa GAE. Đầu vào của thuật toán là ma trận biểu diễn đồ thị ẩn chứa thông tin về cấu trúc liên kết và ngữ nghĩa hồ sơ.\vspace{0.3cm}
 
-Có rất nhiều phiên bản cụ thể được triển khai từ GNN, trong đó nổi bật nhất phải kể đến Graph Attention Network (GAT). Kiến trúc này được giới thiệu bởi Veličković và cộng sự \cite{veličković2018graphattentionnetworks}, họ đề xuất cơ chế self-attention để học trọng số cho các cạnh. Điều này cho phép mô hình tập trung vào các hàng xóm quan trọng nhất đối với đỉnh đang xét.\vspace{0.3cm}
+\indent\indent Khác với các phương pháp thử sai truyền thống trên một không gian tham số vô hạn, nghiên cứu đề xuất chiến lược khoanh vùng không gian tìm kiếm cho số lượng cụm $K$ dựa trên lý thuyết cấu trúc cộng đồng trong mạng quy mô lớn của Leskovec và cộng sự \cite{leskovec2009community}. Theo đó, đồ thị mạng xã hội thường tuân theo cấu trúc "Lõi - Rìa" (\textit{Core-Whisker}), trong đó phần lõi đặc chiếm khoảng $60\%$ tổng số nút, và $40\%$ còn lại phân tán thành các cộng đồng nhỏ ở rìa.\vspace{0.3cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/part-02/chap-01/GAT.png}
-    \vspace{0.5cm}
-    \caption{Minh hoạ kiến trúc cơ bản của GAT}
-    \label{fig:GAT}
-\end{figure}
+\indent\indent Áp dụng nguyên lý này vào bài toán hiện tại, hệ thống thiết lập giả thuyết rằng các mạng lưới Sybil thường hoạt động thành các nhóm. Dựa trên quy mô $N$ của từng tập dữ liệu (tuần, tháng, quý), khoảng khảo sát của tham số $K$ được tính toán ngược sao cho kích thước trung bình của các cụm ở vùng rìa luôn bị ép vào khoảng tối ưu (dao động từ vài nút đến dưới 30 nút/cụm).\vspace{0.3cm}
 
-Cơ chế Attention trong GAT được thực hiện như sau:
+\indent\indent Sau khi không gian tìm kiếm đã được giới hạn chặt chẽ bởi lý thuyết đồ thị, giá trị $K$ tối ưu cuối cùng được xác định thông qua thực nghiệm nhằm tối ưu hóa đồng thời hai chỉ số: Hệ số Silhouette - đo lường độ tách biệt giữa các cụm \cite{rousseeuw1987silhouettes} và Chỉ số Davies-Bouldin - đo lường độ nén bên trong cụm \cite{davies1979cluster}. Cách tiếp cận kết hợp này không chỉ tiết kiệm đáng kể chi phí tính toán mà còn đảm bảo các điểm cực trị của thuật toán phản ánh đúng bản chất hành vi tổ chức của các thực thể độc hại.\vspace{0.3cm}
+
+%=============================================================
+
+\textbf{2.5.2. Hệ thống luật suy diễn (Heuristics) và cơ chế định lượng rủi ro}\vspace{0.2cm}
+
+\indent\indent Sau bước phân cụm, nghiên cứu này thực hiện tính toán các chỉ số thống kê tổng hợp cho từng nhóm. Các chỉ số này đóng vai trò là tham số đầu vào cho các hàm gán nhãn theo tri thức chuyên gia \cite{ratner2017snorkel}, nhằm thiết lập một cơ chế định lượng điểm rủi ro (từ $0$ đến $100$) cho từng cụm. Cụ thể, các chỉ số trọng yếu được trích xuất bao gồm:\vspace{-0.1cm}
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item Đầu tiên, hệ số chú ý (attention coefficient) $e_{ij}$ giữa đỉnh $i$ và đỉnh lân cận $j$ được tính toán thông qua một mạng noron truyền thẳng:
-    \[
-        e_{ij} = \text{LeakyReLU}\left( \vec{a}^T [\mathbf{W}\vec{h}_i \| \mathbf{W}\vec{h}_j] \right)
-    \]
-    Trong đó: $\vec{a}$ là một vector trọng số có thể học được, $\mathbf{W}$ là ma trận trọng số, $\|$ là phép nối (concatenation), và hàm kích hoạt LeakyReLU đảm bảo tính phi tuyến.
-
-    \item Để so sánh được các hệ số giữa các đỉnh khác nhau, Veličković và cộng sự đề xuất sử dụng hàm softmax được để chuẩn hóa trọng số chú ý $\alpha_{ij}$:
-    \[
-        \alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in N_i} \exp(e_{ik})}
-    \]
-    
-    \item Cuối cùng, vector đặc trưng đầu ra của đỉnh $i$ được tính bằng tổng có trọng số của các đặc trưng hàng xóm:
-    \[
-        \vec{h}'_i = \sigma \left( \sum_{j \in N_i} \alpha_{ij} \mathbf{W}\vec{h}_j \right)
-    \]
-    Trong đó $\sigma$ là một hàm kích hoạt dạng phi tuyến, thường là ELU.
+    \item \texttt{avg\_trust}: Điểm tin cậy trung bình dựa trên lịch sử hoạt động trên \textit{Lens Protocol}.
+    \item \texttt{std\_creation\_hours}: Độ lệch chuẩn thời gian khởi tạo tài khoản trong cụm.
+    \item \texttt{pct\_co\_owner}: Tỷ lệ các cặp tài khoản có chung địa chỉ ví điều khiển.
+    \item \texttt{pct\_fuzzy\_handle}: Tỷ lệ tương đồng về cú pháp tên định danh.
+    \item \texttt{pct\_social}: Cường độ tương tác xã hội thực tế (gồm các nối kết trong tầng Theo dõi và Tương tác).
 \end{itemize}
 
-GAT cũng sử dụng cơ chế Multi-head Attention tương tự như Transformer để ổn định quá trình huấn luyện, cho phép mô hình học các mối quan hệ ngữ nghĩa đa dạng từ nhiều không gian con khác nhau. Cụ thể, với $K$ đầu attention độc lập, quá trình tổng hợp vector đầu ra $\vec{h}'_i$ được thực hiện theo hai trường hợp:
+\indent\indent Dựa trên các chỉ số định lượng trên, hệ thống luật suy diễn được xây dựng như một sự giao thoa giữa các kỹ thuật phòng thủ kinh điển trong mạng xã hội truyền thống và các quy tắc tùy chỉnh đặc thù cho môi trường Web3. Chi tiết các tiêu chí vi phạm và trọng số điểm phạt được trình bày trong Bảng \ref{tab:heuristics} dưới đây.
 
-\begin{itemize}[label={--}, itemsep=5pt]
-    \item Trường hợp 1 (Concatenation): Thường được áp dụng tại các tầng ẩn. Kết quả từ $K$ đầu chú ý sẽ được nối lại với nhau, tạo ra vector đặc trưng có số chiều mở rộng:
-    \[
-        \vec{h}'_i = \Bigg\Vert_{k=1}^K \sigma \left( \sum_{j \in {N}_i} \alpha_{ij}^{(k)} \mathbf{W}^{(k)}\vec{h}_j \right)
-    \]
-    Trong đó $\|$ biểu diễn phép nối vector, $\alpha_{ij}^{(k)}$ là hệ số chú ý chuẩn hóa của đầu thứ $k$, và $\mathbf{W}^{(k)}$ là ma trận trọng số tương ứng.
+\begin{table}[H]
+    \centering
+    \caption{Hệ thống luật suy diễn và trọng số điểm phạt rủi ro}
+    \label{tab:heuristics}
+    \renewcommand{\arraystretch}{1.3} % Tăng khoảng cách giữa các dòng
+    \begin{tabular}{|p{3.2cm}|p{3.5cm}|c|p{6.6cm}|}
+        \hline
+        \textbf{Tiêu chí vi phạm} & \textbf{Điều kiện xác định} & \textbf{Điểm} & \textbf{Cơ sở khoa học / Đóng góp} \\
+        \hline
+        Tương đồng định danh & \texttt{pct\_fuzzy\_handle} $\geq 50\%$ & $+15$ & Kế thừa cơ chế nhận diện đặc trưng tài khoản giả mạo từ nghiên cứu của Al-Qurishi và cộng sự \cite{al2017sybil}. \\
+        \hline
+        Khởi tạo đồng loạt & \texttt{std\_creation} $< 0.5$h & $+15$ & Kế thừa quy tắc phát hiện khởi tạo hàng loạt bằng mã lệnh tự động \cite{al2017sybil}. \\
+        \hline
+        Mạng lưới đồng sở hữu & \texttt{pct\_co\_owner} $> 5\%$ & $+50$ & \textbf{Đề xuất của nghiên cứu:} Bằng chứng xác thực về tính sở hữu của Web3 khi một ví quản lý nhiều tài khoản. \\
+        \hline
+        Tương tác xã hội thấp & \texttt{pct\_social} $\leq 20\%$ & $+10$ & \textbf{Đề xuất của nghiên cứu:} Phản ánh đặc tính của Sybil sinh ra chỉ để trục lợi (\textit{airdrop}). \\
+        \hline
+        Điểm tin cậy nền tảng thấp & \texttt{avg\_trust} $\leq 5$ & $+20$ & \textbf{Đề xuất của nghiên cứu:} Đánh giá dựa trên độ uy tín trên nền tảng Lens Protocol. \\
+        \hline
+    \end{tabular}
+\end{table}
 
-    \item Trường hợp 2 (Averaging): Thường được áp dụng tại tầng đầu ra (output layer) hoặc tầng phân lớp cuối cùng để đưa vector về kích thước mong muốn. Thay vì nối, mô hình thực hiện lấy trung bình cộng và áp dụng hàm kích hoạt phi tuyến sau cùng:
-    \[
-        \vec{h}'_i = \sigma \left( \frac{1}{K} \sum_{k=1}^K \sum_{j \in {N}_i} \alpha_{ij}^{(k)} \mathbf{W}^{(k)}\vec{h}_j \right)
-    \]
+\indent\indent Tổng điểm rủi ro của một cụm $C$ được tổng hợp từ các lỗi vi phạm và tính toán thông qua hàm giới hạn trần để đảm bảo điểm không vượt quá ngưỡng tối đa:\vspace{-0.1cm}
+\[
+    \text{RiskScore}(C) = \min \left( \sum_{i=1}^{n} \text{Rule}_i, 100 \right)
+\]
+
+%=============================================================
+
+\textbf{2.5.3. Phân lớp mờ và gán nhãn giả định (Pseudo-labeling)}\vspace{0.2cm}
+
+\indent\indent Dựa trên dải điểm rủi ro thu được, hệ thống áp dụng kỹ thuật gán nhãn giả định (\textit{Pseudo-labeling}) \cite{lee2013pseudo} để chuyển đổi các cụm thành 4 lớp phân loại. Các nhãn này sau đó được gán trực tiếp cho toàn bộ các nút thuộc cụm tương ứng:\vspace{-0.1cm} 
+\begin{itemize}[label={--}, itemsep=1pt]
+    \item \textbf{0\_BENIGN (0 - 20 điểm):} Nhóm người dùng thật, hoạt động với các tiêu chuẩn của cộng đồng.
+    \item \textbf{1\_LOW\_RISK (21 - 50 điểm):} Nhóm tài khoản đáng ngờ, có dấu hiệu Sybil ở mức độ nhẹ.
+    \item \textbf{2\_HIGH\_RISK (51 - 80 điểm):} Nhóm rủi ro cao, có biểu hiện của việc sử dụng phần mềm tự động hóa.
+    \item \textbf{3\_MALICIOUS (81 - 100 điểm):} Mạng lưới Sybil, vi phạm nghiêm trọng các ràng buộc bảo mật.
 \end{itemize}
+
+%=============================================================
+
+\textbf{2.5.4. Xác thực và hiệu chuẩn nhãn (cần chỉnh sửa lại)}\vspace{0.2cm}
+
+\indent\indent Để đảm bảo bộ nhãn giả không làm nhiễu quá trình huấn luyện của mạng GNN ở giai đoạn sau, hệ thống thực hiện bước xác thực chéo. Một mẫu dữ liệu ngẫu nhiên từ các cụm có điểm rủi ro nằm ở vùng biên (gần ngưỡng chuyển nhãn) sẽ được rà soát và đối chiếu thủ công. Nếu tỷ lệ sai lệch vượt quá ngưỡng cho phép, các trọng số điểm phạt trong Bảng \ref{tab:heuristics} sẽ được tinh chỉnh lại nhằm phản ánh chính xác nhất thực trạng hành vi của bot farm tại thời điểm thu thập dữ liệu.

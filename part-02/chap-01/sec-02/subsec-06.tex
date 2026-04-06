@@ -1,28 +1,16 @@
-\subsubsection{2.6. Mạng Kolgomorov-Arnold (KAN)}
-\indent\indent Trong nhiều thập kỷ, kiến trúc MLP đã đóng vai trò là xương sống của hầu hết các mô hình học sâu. Tuy nhiên, MLP tồn tại những hạn chế trong khả năng biểu diễn phi tuyến đối với các đặc trưng phức tạp. Gần đây, Liu và cộng sự \cite{liu2025kankolmogorovarnoldnetworks} đã đề xuất một kiến trúc mới, gọi là mạng Kolmogorov-Arnold (KAN), kiến trúc này dựa trên định lý biểu diễn Kolmogorov-Arnold.\vspace{0.3cm}
+\subsubsection{2.6. Kiến trúc phân lớp tách rời (Decoupled Machine Learning)}
+\indent\indent Trong các kiến trúc mạng nơ-ron đồ thị truyền thống, quy trình huấn luyện thường được thực hiện theo cơ chế đầu-cuối (\textit{End-to-End}), nơi các tầng tích chập GNN kết nối trực tiếp với một lớp phân loại tuyến tính. Tuy nhiên, phương pháp này thường gặp hạn chế trong việc tạo ra các ranh giới phân tách phi tuyến tính phức tạp và thiếu tính diễn giải cho người dùng cuối.\vspace{0.3cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/part-02/chap-01/KAN.png}
-    \vspace{0.5cm}
-    \caption{Minh hoạ kiến trúc cơ bản của KAN}
-    \label{fig:KAN}
-\end{figure}
+Để khắc phục vấn đề này, đề tài đề xuất kiến trúc phân lớp tách rời. Thay vì sử dụng GNN để phân lớp trực tiếp, hệ thống sử dụng mạng nơ-ron đồ thị như một bộ trích xuất đặc trưng. Phương pháp này dựa trên luận điểm của Grover và Leskovec trong nghiên cứu \texttt{node2vec} \cite{grover2016node2vec}, khẳng định rằng các mô hình học trên đồ thị có khả năng chuyển đổi cấu trúc liên kết và ngữ nghĩa nút thành các vector biểu diễn (\textit{node embeddings}) giàu thông tin, sẵn sàng cho các tác vụ phân lớp phía sau.\vspace{0.3cm}
 
-Khác với MLP -- nơi các hàm kích hoạt (activation functions) là cố định tại các nút và trọng số là các tham số học được trên các cạnh, KAN đảo ngược tư duy này: KAN không có trọng số tuyến tính, thay vào đó, mỗi cạnh kết nối chứa một hàm kích hoạt phi tuyến có thể học được (thường được tham số hóa bởi B-splines).\vspace{0.3cm}
+Kỹ thuật triển khai cụ thể được thực hiện bằng cách sử dụng cơ chế can thiệp luồng dữ liệu tại tầng tích chập cuối cùng của các mạng GNN. Tại đây, ma trận nhúng $\mathbf{Z} \in \mathbb{R}^{N \times 16}$ được trích xuất trước khi đi qua lớp phân loại tuyến tính. Việc tách rời này biến bài toán phân loại đồ thị thành bài toán phân loại dữ liệu bảng trên không gian ẩn 16 chiều. Theo nghiên cứu của Grinsztajn và cộng sự \cite{grinsztajn2022tree} tại NeurIPS 2022, các mô hình dựa trên cây thường xuyên vượt trội hơn các mạng nơ-ron sâu trong việc xử lý dữ liệu dạng bảng nhờ khả năng tạo ra các ranh giới quyết định không đều và chịu nhiễu tốt hơn.\vspace{0.3cm}
 
-Về mặt toán học, nếu MLP xấp xỉ hàm số thông qua tổ hợp tuyến tính và phi tuyến xen kẽ, thì một tầng KAN biểu diễn hàm mục tiêu $\Phi$ dựa trên công thức:
-\[
-    \Phi(\mathbf{x}) = \sum_{q=1}^{2n+1} \Phi_q \left( \sum_{p=1}^n \phi_{q,p}(x_p) \right)
-\]
-\indent Trong đó $\phi_{q,p}$ là các hàm đơn biến có thể học được. Kiến trúc này cho phép KAN đạt độ chính xác tương đương hoặc hơn MLP nhưng với số lượng tham số ít hơn đáng kể.\vspace{0.3cm}
-
-Mặc dù KAN mang lại lợi ích lớn về mặt lý thuyết, việc triển khai nguyên bản sử dụng B-splines gặp trở ngại lớn về tốc độ tính toán trên GPU do khó tận dụng khả năng tính toán song song ma trận. Để giải quyết vấn đề này, tác giả Li \cite{li2024kolmogorovarnoldnetworksradialbasis} đã giới thiệu FastKAN.\vspace{0.3cm}
-
-FastKAN thay thế việc tính toán B-splines phức tạp bằng các hàm Gaussian Radial Basis Functions (Gaussian RBF) kết hợp với các phép nhân ma trận tiêu chuẩn. Cải tiến này giúp:\vspace{-0.1cm}
+Sau khi thu được các vector nhúng từ GNN, đề tài thực hiện thử nghiệm đối chứng trên 4 thuật toán học máy đại diện cho các trường phái tiếp cận khác nhau:\vspace{-0.1cm}
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item Chuyển đổi các phép tính cục bộ của spline thành các phép tính vector hóa, tận dụng tối đa sức mạnh của CUDA core trên GPU.
-    \item Tăng tốc độ huấn luyện lên gấp nhiều lần (thường là 3-5 lần) so với KAN gốc mà vẫn duy trì độ chính xác tương đương.
+    \item \textbf{K-Nearest Neighbors (KNN):} Phương pháp phân loại dựa trên khoảng cách hình học trong không gian đặc trưng \cite{cover1967nearest}.
+    \item \textbf{Linear Support Vector Classifier (Linear SVC):} Đại diện cho phương pháp tìm kiếm siêu phẳng phân tách tối ưu \cite{cortes1995support}.
+    \item \textbf{Random Forest (RF):} Mô hình tập hợp (\textit{Ensemble Learning}) theo cơ chế \textit{Bagging}, giúp giảm thiểu phương sai và hiện tượng quá khớp \cite{breiman2001random}.
+    \item \textbf{XGBoost:} Thuật toán tối ưu hóa theo cơ chế \textit{Gradient Boosting}, giúp tăng cường độ chính xác thông qua việc học từ các sai số của mô hình trước đó \cite{chen2016xgboost}.
 \end{itemize}
 
-Sự ra đời của FastKAN đã đưa kiến trúc Kolmogorov-Arnold đến gần hơn với các ứng dụng thực tế quy mô lớn, thay vì chỉ dừng lại ở mức độ lý thuyết. Tuy nhiên FastKAN lại có 1 nhược điểm là số lượng tham số có thể lớn hơn KAN gốc, thậm chí là lớn hơn MLP, nhưng đây là một đánh đổi đáng giá cho tốc độ thực thi chậm chạp của KAN.
+Hơn nữa, việc kết hợp các tổ hợp kiến trúc GNN (như GATv2) kết hợp với các mô hình họ cây (\textit{RF/XGBoost}) không chỉ cải thiện hiệu năng dự đoán mà còn đóng vai trò then chốt trong việc giải thích mô hình. Thông qua đó, hệ thống có khả năng bóc tách mức độ đóng góp của từng chiều nhúng, từ đó giúp hiểu được lý do một thực thể bị đánh dấu rủi ro, đáp ứng mục tiêu phát hiện Sybil có khả năng giải thích của đề tài.

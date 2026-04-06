@@ -1,23 +1,15 @@
-\subsubsection{2.7. Thang đo độ chính xác}
-\indent\indent Để đánh giá định lượng hiệu quả của các mô hình học sâu trong bài toán phân lớp, việc chỉ dựa vào số lượng mẫu dự đoán đúng là chưa đủ. Mà cần phải dựa trên ma trận nhầm lẫn (Confusion Matrix) với bốn thành phần cơ bản: Dương tính thật (True Positive -- TP), Âm tính thật (True Negative -- TN), Dương tính giả (False Positive -- FP), và Âm tính giả (False Negative -- FN), các thành phần này tạo thành các thang đo tiêu chuẩn sau:\vspace{-0.1cm}
-\begin{itemize}[label={--}, itemsep=1pt]
-    \item Accuracy: Là tỷ lệ giữa tổng số mẫu được dự đoán đúng trên tổng số mẫu trong tập dữ liệu. Đây là thang đo phổ biến nhất nhưng thường không phản ánh đúng hiệu năng khi tập dữ liệu bị mất cân bằng.
-    \[
-        \text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
-    \]
+\subsubsection{2.7. Chiến lược huấn luyện và xử lý mất cân bằng dữ liệu}
 
-    \item Precision: Phản ánh mức độ tin cậy của mô hình khi dự đoán một mẫu là dương tính. Precision trả lời câu hỏi: "Trong số các mẫu mô hình dự đoán là Positive, bao nhiêu mẫu thực sự là Positive?".
-    \[
-        \text{Precision} = \frac{TP}{TP + FP}
-    \]
+\indent\indent Để đảm bảo tính khách quan và khả năng tổng quát hóa của các mô hình học có giám sát, tập dữ liệu đồ thị được phân chia như sau: 60\% cho tập huấn luyện, 20\% cho tập đánh giá và 20\% cho tập kiểm thử. Đảm bảo tỷ lệ phân bố của 4 lớp nhãn (\texttt{BENIGN, LOW\_RISK, HIGH\_RISK, MALICIOUS}) được bảo toàn đồng đều trên cả ba tập, ngăn chặn hiện tượng thiếu hụt mẫu của các lớp thiểu số trong quá trình đánh giá.\vspace{0.3cm}
 
-    \item Recall: Còn được gọi là Sensitivity, thang đo này phản ánh khả năng của mô hình trong việc phát hiện các mẫu dương tính thực tế. Recall trả lời câu hỏi: "Trong tổng số các mẫu thực sự là Positive, mô hình đã bỏ sót bao nhiêu mẫu?".
-    \[
-        \text{Recall} = \frac{TP}{TP + FN}
-    \]
+Đối mặt với đặc thù mất cân bằng nghiêm trọng của dữ liệu mạng xã hội phi tập trung, việc tối ưu hóa bằng hàm mất mát tiêu chuẩn sẽ khiến mạng GNN có xu hướng thiên vị lớp đa số để đạt \textit{Accuracy} cao. Để giải quyết triệt để vấn đề này, hệ thống áp dụng kỹ thuật Học nhạy cảm với chi phí (\textit{Cost-sensitive Learning}) \cite{he2009learning} bằng cách tích hợp trọng số lớp (\textit{Class Weights}) trực tiếp vào hàm mất mát \textit{Cross-Entropy}.\vspace{0.3cm}
 
-    \item F1-Score: Trong thực tế, thường có sự đánh đổi giữa Precision và Recall. F1-Score là trung bình điều hòa của hai giá trị này, cung cấp một đánh giá tổng quát cân bằng hơn, đặc biệt hữu ích trong các bài toán mà dữ liệu phân bố không đều.
-    \[
-        \text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
-    \]
-\end{itemize}
+Trọng số $\alpha_c$ cho từng lớp $c$ được tính toán dựa trên tần suất xuất hiện của lớp đó trong tập huấn luyện theo công thức cân bằng được chuẩn hóa rộng rãi trong các hệ thống học máy \cite{pedregosa2011scikit}:
+\[
+    \alpha_c = \frac{N}{C \times N_c}
+\]
+Trong đó, $N$ là tổng số nút trong tập huấn luyện, $C$ là tổng số lượng lớp phân loại (trong trường hợp này $C=4$), và $N_c$ là số lượng nút thực tế thuộc lớp $c$. 
+
+Thông qua cơ chế nghịch đảo tần suất này, các lỗi dự đoán sai trên lớp thiểu số sẽ phải chịu phạt lớn hơn rất nhiều trong quá trình cập nhật gradient. Kỹ thuật này ép mạng nơ-ron phải tập trung trích xuất đặc trưng của các cụm Sybil độc hại thay vì hội tụ vào một giải pháp an toàn mang tính rập khuôn theo số đông.\vspace{0.3cm}
+
+Đồng bộ với kỹ thuật điều chỉnh hàm mất mát, hệ thống sử dụng \textit{Macro F1-Score} \cite{sokolova2009systematic} làm thang đo giám sát cốt lõi trong suốt quá trình huấn luyện (để quyết định dừng sớm - \textit{Early Stopping}) và lựa chọn mô hình. Cơ chế này đối xử hoàn toàn bình đẳng giữa các nhóm nhãn, buộc mô hình phải duy trì hiệu năng cao trên cả nhiệm vụ nhận diện các cụm Sybil lẫn bảo vệ người dùng thật, từ đó đánh giá đúng thực chất năng lực phân tách đa lớp của kiến trúc mạng.
