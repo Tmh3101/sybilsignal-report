@@ -1,46 +1,40 @@
-\subsubsection{1.2. Mô hình MGAT + FastKAN/MLP}
+\subsubsection{1.2. Kiến trúc mạng tự mã hóa đồ thị (GAE + GATv2)}
+
+\indent\indent Để giải quyết thách thức về sự thiếu hụt dữ liệu gán nhãn trong giai đoạn đầu, hệ thống áp dụng kiến trúc GAE. Mục tiêu của mô hình này là học không giám sát, tự động nén các đặc trưng đồ thị phức tạp vào không gian nhúng để phục vụ cho thuật toán gom cụm ở bước tiếp theo.\vspace{0.3cm}
+
+Kiến trúc chi tiết của mô hình GAE được minh họa tại \textbf{Hình \ref{fig:GAEPipeline}}. Mô hình được thiết kế với hai thành phần cốt lõi: Bộ mã hóa sử dụng GATv2 và Bộ giải mã.
 
 \begin{figure}[H]
     \centering
-    \scalebox{0.4}{\includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/Pipeline.jpg}}
-    \vspace{0.3cm}
-    \caption{Kiến trúc tổng quát của mô hình CNN backbone + MGAT + FastKAN/MLP}
-    \label{fig:KTPipeline}
+    \includegraphics[width=0.6\linewidth]{images/part-02/chap-02/sec-01/GAEPipeline.png}
+    \vspace{0.2cm}
+    \caption{Kiến trúc Mạng tự mã hóa đồ thị với bộ mã hóa GATv2}
+    \label{fig:GAEPipeline}
 \end{figure}
 
+\vspace{0.1cm}
+\textit{1.2.1. Bộ mã hóa GATv2 Encoder}\vspace{0.2cm}
+
+Hệ thống sử dụng Mạng nơ-ron tích chập đồ thị có cơ chế chú ý phiên bản 2 (\textit{GATv2Conv}) làm bộ mã hóa. Khác với GAT truyền thống, GATv2 sử dụng cơ chế chú ý động (Dynamic Attention), cho phép mô hình xếp hạng độ quan trọng của các nút lân cận một cách linh hoạt hơn. Đặc biệt, bộ mã hóa được thiết kế để duy trì cơ chế Điều hướng chú ý (Attention Steering) thông qua tham số \texttt{edge\_dim=1}, giúp hấp thụ trực tiếp các trọng số cạnh đã được chuẩn hóa Logarit ở giai đoạn trước vào mọi bước nhảy lan truyền.\vspace{0.3cm}
+
+Chi tiết luồng xử lý Tensor qua các tầng của bộ mã hóa được minh họa tại \textbf{Hình \ref{fig:GATEncoder}}:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/ViDuDoThi.jpg}
-    \vspace{0.3cm}
-    \caption{\centering Ví dụ về cách xây dựng đồ thị và dự đoán nhãn khi dùng mô hình CNN backbone + MGAT + FastKAN/MLP}
-    \label{fig:VDPipeline}
+    % Đổi tên file ảnh dưới đây cho khớp với sơ đồ GAT Encoder bạn vừa vẽ
+    \includegraphics[width=0.6\linewidth]{images/part-02/chap-02/sec-01/GATEncoder.png}
+    \vspace{0.2cm}
+    \caption{Kiến trúc luồng dữ liệu bên trong Bộ mã hóa GATv2}
+    \label{fig:GATEncoder}
 \end{figure}
 
-% \indent\indent Kiến trúc của mô hình gồm 5 tầng được mô tả tổng quát qua \textbf{Hình} \ref{fig:KTPipeline} và có ví dụ cụ thể ở \textbf{Hình} \ref{fig:VDPipeline}, trong đó mỗi tầng làm nhiệm vụ cụ thể như sau:
-% \begin{itemize}
-%     \item \textbf{Extract Features Layers:} Tầng dùng để trích xuất đặc trưng riêng biệt cho từng loại phương thức, như ví dụ ở \textbf{Hình} \ref{fig:VDPipeline}, khi đồ thị ban đầu đi qua tầng này, ta được các đặc trưng ở không gian khác nhau tuỳ thuộc phương thức của nút đó (nút màu vàng là hình ảnh, nút màu xanh lá là văn bản, nút màu xanh dương là âm thanh).
-%     \item \textbf{Share Projection Layer:} Tầng biến đổi không gian từ các phương thức khác nhau về cùng một không gian chung để chúng được biểu diễn một cách thống nhất.
-%     \item \textbf{Edge Weight Layer}: Tầng này dùng các vector ở các nút do Share Projection Layer sinh ra để tiến hành tính trọng số trên cạnh, là một bộ trọng số vô hướng có giá trị từ $[-1, 1]$, nhằm mục tiêu là học mối quan hệ "bạn bè" (trọng số cạnh dương) hoặc "đối kháng" (trọng số cạnh âm) giữa các nút.
-%     \item \textbf{GAT Layer}: Tầng ứng dụng GAT để tổng hợp vector mới cho các nút từ thông tin các nút hàng xóm của nó, ở đây ta chỉ xét các hàng xóm thuộc nhóm "bạn bè", vì chúng là những hàng xóm mang thông tin bổ sung cần thiết cho nút hiện tại.
-%     \item \textbf{FastKAN/MLP Classifier}: Tầng này sử dụng vector mới từ GAT Layer để tiến hành phân lớp, bằng cách đem các nút đi dự đoán, và cộng trung bình dự đoán có trọng số của các nút (bằng cách Graph Weight từ tầng Edge Weight Layer) nhằm tăng tính linh hoạt của mô hình, mỗi nút sẽ có đóng góp khác nhau vào kết quả cuối cùng.
-% \end{itemize}
+Kiến trúc mã hóa bao gồm hai tầng tích chập:
+\begin{itemize}[label={--}, itemsep=3pt]
+    \item \textbf{Tầng tích chập thứ nhất (Conv1):} Nhận đầu vào là ma trận đặc trưng $X \in \mathbb{R}^{N \times 396}$. Tầng này sử dụng cơ chế đa chú ý (Multi-head Attention) với $4$ heads nhằm khai phá đặc trưng dưới nhiều không gian biểu diễn khác nhau. Mỗi head ánh xạ dữ liệu thành không gian $32$ chiều. Các kết quả sau đó được ghép nối lại, tạo ra vector trung gian có kích thước $128$ chiều ($32 \times 4$). Đầu ra đi qua hàm kích hoạt phi tuyến ELU (Exponential Linear Unit) và một lớp Dropout với tỷ lệ $0.1$ nhằm ngăn chặn over-fitting.
+    \item \textbf{Tầng tích chập thứ hai (Conv2):} Nhận vector $128$ chiều làm đầu vào và thiết lập cơ chế chú ý đơn ($1$ head). Cấu hình này ép buộc mô hình tổng hợp các góc nhìn từ tầng trước để nén thông tin thành vector tiềm ẩn cuối cùng $Z \in \mathbb{R}^{N \times 16}$.
+\end{itemize}\vspace{0.3cm}
 
-\indent\indent Kiến trúc của mô hình gồm 5 tầng, được mô tả tổng quát trong \textbf{Hình} \ref{fig:KTPipeline} và được minh hoạ cụ thể qua \textbf{Hình} \ref{fig:VDPipeline}. Mỗi tầng đảm nhận một vai trò riêng trong toàn bộ pipeline, cụ thể như sau:
-\begin{itemize}[label={--}, itemsep=1pt]
-    \item \textbf{Extract Features Layers:} Tầng này có nhiệm vụ trích xuất đặc trưng riêng cho từng loại phương thức dữ liệu. Như minh hoạ trong \textbf{Hình} \ref{fig:VDPipeline}, khi đồ thị ban đầu đi qua tầng này, các nút sẽ được ánh xạ sang những không gian đặc trưng khác nhau tuỳ theo phương thức của chúng (nút màu vàng biểu diễn hình ảnh, nút màu xanh lá biểu diễn văn bản, và nút màu xanh dương biểu diễn âm thanh).
-    
-    \item \textbf{Share Projection Layer:} Tầng này thực hiện phép chiếu các đặc trưng từ những không gian phương thức khác nhau về một không gian biểu diễn chung, nhằm đảm bảo các nút được biểu diễn một cách thống nhất và có thể so sánh trực tiếp với nhau.
-    
-    \item \textbf{Edge Weight Layer}: Dựa trên các vector biểu diễn của nút do Share Projection Layer sinh ra, tầng này học và tính toán trọng số cho các cạnh trong đồ thị. Trọng số cạnh là một giá trị nằm trong đoạn $[-1, 1]$, phản ánh mức độ quan hệ giữa các nút, trong đó trọng số dương biểu thị mối quan hệ "bạn bè", còn trọng số âm biểu thị mối quan hệ "đối kháng".
-    
-    \item \textbf{GAT Layers}: Tầng này áp dụng GAT để tổng hợp và cập nhật biểu diễn mới cho mỗi nút dựa trên thông tin từ các nút hàng xóm. Trong quá trình này, mô hình chỉ xét các hàng xóm có trọng số cạnh dương (nhóm "bạn bè"), vì đây là những nút cung cấp thông tin bổ trợ hữu ích cho nút đang xét.
-    
-    \item \textbf{FastKAN/MLP Classifier}: Tầng này sử dụng các vector đã được cập nhật từ GAT Layer để thực hiện phân lớp. Đầu tiên, mô hình tiến hành dự đoán trên từng nút và sau đó tổng hợp kết quả bằng cách lấy trung bình có trọng số, trong đó trọng số được xác định bởi Graph Weight từ Edge Weight Layer. Phương pháp này giúp tăng tính linh hoạt của mô hình, cho phép mỗi nút đóng góp khác nhau vào kết quả dự đoán cuối cùng.
-\end{itemize}
+\textit{1.2.2. Bộ giải mã (Inner Product Decoder)}\vspace{0.2cm}
 
+Thay vì sử dụng một mạng nơ-ron phức tạp, bộ giải mã của GAE tính toán tích vô hướng giữa các vector embedding của các cặp nút ($Z_i \cdot Z_j$) để dự đoán xác suất tồn tại của một cạnh nối giữa chúng. Đầu ra của hệ thống được đánh giá thông qua hàm lỗi tái tạo (\textit{Reconstruction Loss}) dựa trên Binary Cross-Entropy (BCE). Khung học không giám sát này sẽ liên tục sử dụng sai số tái tạo để lan truyền ngược, ép các trọng số của GATv2 phải điều chỉnh sao cho đồ thị tái tạo từ không gian tiềm ẩn gần giống nhất với đồ thị đa quan hệ gốc ban đầu.\vspace{0.3cm}
 
-\input{part-02/chap-02/sec-01/subsec-02/sss-01}
-\input{part-02/chap-02/sec-01/subsec-02/sss-02}
-\input{part-02/chap-02/sec-01/subsec-02/sss-03}
-\input{part-02/chap-02/sec-01/subsec-02/sss-04}
-\input{part-02/chap-02/sec-01/subsec-02/sss-05}
+\textbf{Đầu ra cuối cùng:} Sau khi kết thúc quá trình tối ưu hóa, mô hình trích xuất ma trận có kích thước $N \times 16$ (node embeddings). Ma trận này chứa đựng toàn bộ tri thức về cấu trúc mạng lưới của đồ thị, đóng vai trò là đầu vào tiên quyết cho quy trình phân cụm và gán nhãn giả lập phía sau.

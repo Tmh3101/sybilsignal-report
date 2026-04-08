@@ -1,0 +1,36 @@
+\subsubsection{1.3. Quy trình gom cụm và gán nhãn giả lập tự động}\vspace{0.2cm}
+
+\indent\indent Sau khi thu được các biểu diễn nút từ GAE, hệ thống thực hiện quy trình gán nhãn giả lập. Mục tiêu của giai đoạn này là hiện thực hóa hệ thống luật đã đề xuất tại Chương 1 thành một quy trình xử lý dữ liệu và tạo ra tập dữ liệu có nhãn phục vụ huấn luyện.\vspace{0.3cm}
+
+% \indent Sơ đồ quy trình thực thi được minh họa tại \textbf{Hình \ref{fig:PseudoPipeline}}, tập trung vào luồng biến đổi dữ liệu từ vector tiềm ẩn sang nhãn định danh:
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.85\linewidth]{images/part-02/chap-02/sec-01/Pseudo_Pipeline.png}
+%     \vspace{0.3cm}
+%     \caption{Quy trình thực thi gán nhãn giả lập trong hệ thống}
+%     \label{fig:PseudoPipeline}
+% \end{figure}
+
+\textit{1.3.1. Tối ưu hóa phân cụm K-Means}\vspace{0.2cm}
+
+Để đảm bảo tính linh hoạt khi xử lý các tập dữ liệu theo Tuần, Tháng và Quý, hệ thống triển khai quy trình tìm kiếm tham số tối ưu tự động thay vì sử dụng một giá trị $K$ cố định. Quy trình này thực hiện khảo sát dải tham số $K$ biến thiên dựa trên quy mô dữ liệu thực tế tại thời điểm trích xuất.\vspace{0.3cm}
+
+Giá trị $K$ tối ưu được lựa chọn thông qua việc đánh giá đồng thời hai chỉ số chất lượng phân cụm: Hệ số Silhouette và Chỉ số Davies-Bouldin. Đảm bảo các nhóm hành vi Sybil được cô lập chặt chẽ trong không gian đồ thị.\vspace{0.3cm}
+
+\textit{1.3.2. Tính toán cường độ hành vi và chấm điểm rủi ro}\vspace{0.2cm}
+
+Tại bước này, hệ thống thực hiện các thống kê trên từng cụm để trích xuất các chỉ số đặc trưng. Dữ liệu từ các cạnh nội bộ (\textit{internal edges}) được lọc và tính toán cường độ dựa trên trọng số Logarit. Các tham số chính bao gồm:
+\begin{itemize}[label={--}, itemsep=2pt]
+    \item \textit{Phân tích thời gian:} Tính độ lệch chuẩn (\texttt{std}) thời gian khởi tạo để phát hiện hành vi tạo tài khoản hàng loạt.
+    \item \textit{Phân tích cú pháp tên:} Trích xuất dữ liệu từ các cạnh \texttt{SIMILARITY} để định lượng tỷ lệ vi phạm cú pháp tên.
+    \item \textit{Định lượng trọng số:} Tính toán tỷ lệ cường độ của các tầng Đồng sở hữu, Tương đồng và Tương tác.
+\end{itemize}
+
+Dựa trên các chỉ số này, hệ thống áp dụng cơ chế chấm điểm rủi ro ($S_{risk}$) và phân lớp mờ dựa trên các ngưỡng và trọng số điểm phạt đã được định nghĩa chi tiết tại \textbf{Mục 2.5 (Chương 1)}.\vspace{0.3cm}
+
+\textit{1.3.3. Kết xuất tập dữ liệu huấn luyện được gán nhãn giả định}\vspace{0.2cm}
+
+Sản phẩm đầu ra của giai đoạn này là một tập dữ liệu có cấu trúc hoàn chỉnh, được đóng gói phục vụ cho huấn luyện có giám sát. Tập dữ liệu bao gồm các thuộc tính then chốt: định danh nút (\texttt{profile\_id}), nhãn phân lớp (\texttt{label}), chỉ số rủi ro định lượng (\texttt{risk\_score}) và các luận cứ vi phạm ràng buộc (\texttt{reason}).\vspace{0.3cm}
+
+Về mặt chiến lược, thông qua việc chuyển đổi các tri thức chuyên gia thành tín hiệu dẫn dắt, tập dữ liệu cung cấp nền tảng để tối ưu hóa hàm mục tiêu cho các mô hình GNN Baseline và kiến trúc Decouped ML.

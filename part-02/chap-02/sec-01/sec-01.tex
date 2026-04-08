@@ -1,51 +1,63 @@
 \subsection{1. Thiết kế hệ thống}
-\indent\indent Quy trình tổng quát của hệ thống được minh họa tại \textbf{Hình \ref{fig:LXLTongQuat}}, bao gồm 4 giai đoạn xử lý tuần tự: (1) Phân tách video, (2) Tiền xử lý và trích xuất đặc trưng, (3) Xây dựng MG, và (4) Suy luận phân tầng.
+
+\indent\indent Quy trình tổng quát của hệ thống SybilSignal được thiết kế nhằm giải quyết bài toán phát hiện tài khoản giả mạo thông qua hai phân hệ chính hoạt động bổ trợ lẫn nhau: \textbf{Phân hệ học biểu diễn và gán nhãn} chịu trách nhiệm kiến tạo dữ liệu và gán nhãn tự động; và \textbf{Phân hệ đánh giá rủi ro} thực hiện nhiệm vụ dự đoán và diễn giải kết quả theo thời gian thực.\vspace{0.4cm}
+    
+\textbf{Luồng dữ liệu Phân hệ học biểu diễn và gán nhãn:}\vspace{0.2cm}
+
+Quy trình của phân hệ này được minh họa tại \textbf{Hình \ref{fig:GAEPipeline}}, tập trung vào việc học biểu diễn không gian tiềm ẩn, tự động hóa khâu gán nhãn nhằm giải quyết sự thiếu hụt dữ liệu huấn luyện.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/TongQuat.jpg}
-    \vspace{0.3cm}
-    \caption{Luồng xử lý tổng quát của hệ thống khi triển khai thành ứng dụng}
-    \label{fig:LXLTongQuat}
+    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/DataPipeline.png}
+    \vspace{0.1cm}
+    \caption{Sơ đồ kiến trúc luồng học biểu diễn và gán nhãn}
+    \label{fig:DataPipeline}
 \end{figure}
 
-\indent\textbf{Đặc tả dữ liệu đầu vào (INPUT):} Hệ thống được thiết kế với cơ chế chấp nhận thiếu hụt, cho phép hoạt động ngay cả khi người dùng không cung cấp đầy đủ văn bản hoặc âm thanh. Tuy nhiên, dữ liệu hình ảnh là thành phần bắt buộc. Các ràng buộc cụ thể bao gồm:\vspace{-0.1cm}
+\textbf{Đặc tả dữ liệu:}
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item Video: Yêu cầu thời lượng tối thiểu 30 giây và tối đa 2 phút. Trong trường hợp người dùng đã cung cấp đủ tối thiểu 3 hình ảnh hợp lệ, việc tải lên video trở thành tùy chọn.
-    \item Hình ảnh: Số lượng tối thiểu là 3 và tối đa 20 ảnh. Nếu video hợp lệ đã được tải lên, hệ thống sẽ tự động trích xuất khung hình và người dùng không cần thao tác thêm.
-    \item Văn bản: Đây là thành phần tùy chọn. Nếu cung cấp, hệ thống chấp nhận duy nhất 01 tệp tin định dạng \texttt{.txt} chứa nội dung mô tả.
-    \item Âm thanh: Đây cũng là thành phần tùy chọn. Hệ thống chấp nhận 01 tệp tin định dạng \texttt{.mp3} hoặc \texttt{.wav} với thời lượng từ 30 giây đến 2 phút. Trường hợp người dùng tải lên video, phần âm thanh sẽ được tự động tách xuất từ video đó.
-\end{itemize}
+    \item \textbf{Đầu vào:} Một \textit{khoảng thời gian} cụ thể. Hệ thống sẽ dựa vào khoảng thời gian này để truy xuất dữ liệu lịch sử hàng loạt từ Lens Protocol thông qua BigQuery (bao gồm thông tin các tài khoản, số liệu thống kê và các bản ghi tương tác).
+    \item \textbf{Đầu ra:} Một \textit{tập dữ liệu đồ thị có nhãn}, sẵn sàng làm nguyên liệu để huấn luyện các mô hình phân lớp.
+\end{itemize}\vspace{0.2cm}
 
-\textbf{Đặc tả dữ liệu đầu ra (OUTPUT):} Nhãn chủ đề ICH được dự đoán bởi mô hình, kèm theo độ tin cậy.\vspace{0.3cm}
-
-\newpage
-\indent\textbf{Chi tiết các giai đoạn xử lý:}
+\textbf{Chi tiết các giai đoạn xử lý:}
 \begin{itemize}[label={--}, itemsep=3pt]
-    \item \textbf{Giai đoạn 1 -- Phân tách video:} Nếu người dùng có tải lên video đầu vào, hệ thống sẽ tiến hành phân tách, quá trình này thực hiện trích xuất chuỗi hình ảnh (tần suất 4 giây/khung hình) và các đoạn âm thanh (5 giây/đoạn) để chuẩn bị cho bước tiếp theo.
+    \item \textbf{Giai đoạn 1 -- Thu thập và xử lý dữ liệu:} Hệ thống truy xuất dữ liệu thô từ Lens Protocol, sau đó tiến hành xử lý song song hai luồng thông tin: trích xuất đặc trưng ngữ nghĩa từ văn bản và tính toán các chỉ số thống kê hoạt động. Kết quả của giai đoạn này là mỗi tài khoản được biểu diễn một cách toàn diện thông qua một vector đặc trưng nút có kích thước $396$ chiều.
+    
+    \item \textbf{Giai đoạn 2 -- Xây dựng đồ thị đa tầng:} Dựa trên dữ liệu tương tác thu thập được, hệ thống kiến tạo cấu trúc đồ thị nhận thức ràng buộc với 4 tầng quan hệ. Trọng số của các cạnh trong mạng lưới được chuẩn hóa theo hàm Logarit nhằm cân bằng tín hiệu thông tin, ngăn chặn sự thống trị của các tài khoản có mật độ kết nối siêu đặc.
+    
+    \item \textbf{Giai đoạn 3 -- Học biểu diễn:} Đồ thị hoàn chỉnh được đưa vào kiến trúc mạng tự mã hóa đồ thị (Graph Autoencoder - GAE) với bộ mã hóa là GATv2. Mục tiêu của giai đoạn này là nén cấu trúc liên kết đa chiều và đặc trưng nút thành các vector trong không gian tiềm ẩn, giúp hệ thống tự động bóc tách các cấu trúc của các nhóm Sybil mà không cần đến dữ liệu gán nhãn từ trước.
+    
+    \item \textbf{Giai đoạn 4 -- Chấm điểm rủi ro và gán nhãn:} Dựa trên các vector biểu diễn, thuật toán K-Means thực hiện gom cụm các tài khoản có độ tương đồng cao về hành vi. Cuối cùng, hệ thống áp dụng cơ chế chấm điểm rủi ro dựa trên hệ luật suy diễn để tự động phân bổ nhãn giả lập (Pseudo-labeling) cho các cụm. Kết quả đầu ra là một tập dữ liệu đồ thị có nhãn chất lượng cao, sẵn sàng phục vụ cho việc huấn luyện có giám sát.
+\end{itemize}\vspace{0.2cm}
 
-    \item \textbf{Giai đoạn 2 -- Tiền xử lý và trích xuất đặc trưng:} Các dữ liệu thô ứng với mỗi phương thức sẽ có cách xử lý riêng biệt khác nhau, bao gồm:
-    \begin{itemize}[label={+}, itemsep=1pt]
-        \item Đặc trưng hình ảnh: Hệ thống tích hợp 6 kiến trúc CNN tiền huấn luyện (pretrained) trên tập dữ liệu ImageNet làm bộ trích xuất đặc trưng nền tảng (backbone). Người dùng có quyền lựa chọn một trong các mô hình: ResNet18, RegNetX400MF, MobileNetV3 Large, MobileNetV3 Small, DenseNet121 và ShuffleNetV2 1.0x. Hình ảnh đầu vào được tự động thay đổi kích thước (resize) và chuẩn hóa (normalize) tuân theo chuẩn của backbone được chọn.
-        
-        \item Đặc trưng văn bản: Dữ liệu văn bản trải qua quy trình gán nhãn từ loại (POS Tagging) sử dụng thư viện \textit{underthesea} chuyên dụng cho tiếng Việt. Sau đó, hệ thống tiến hành loại bỏ stopwords và chỉ giữ lại các từ mang nội dung chính thuộc các nhóm: danh từ (N), danh từ riêng (Np), động từ (V) và tính từ (A). Để biểu diễn ngữ nghĩa, hệ thống sử dụng mô hình all-MiniLM-L6-v2 nhằm chuyển đổi cặp (từ khóa, câu chứa từ khóa) thành vector embedding.
-        
-        \item Đặc trưng âm thanh: Hệ thống áp dụng kỹ thuật trích xuất MFCC để nắm bắt đặc trưng về tần số của âm thanh. Để mô tả sự biến thiên của tín hiệu âm thanh theo thời gian (yếu tố quan trọng trong các lễ hội âm nhạc), hệ thống kết hợp thêm các đặc trưng động là Delta (đạo hàm bậc 1) và Delta-Delta (đạo hàm bậc 2).
-    \end{itemize}
+\textbf{Luồng dữ liệu Phân hệ Đánh giá rủi ro:}\vspace{0.2cm}
 
-    \item \textbf{Giai đoạn 3 -- Xây dựng MG:}  Các vector đặc trưng từ ba phương thức được chuyển đổi thành các đỉnh trong một đồ thị thống nhất. Về mặt cấu trúc, đây là đồ thị đa phương thức cấp đỉnh (Node-Level MG). Trong đó, các kết nối được thiết lập giữa tất cả các đỉnh, bao gồm các đỉnh cùng phương thức và các đỉnh khác phương thức (ví dụ: kết nối giữa 1 đỉnh hình ảnh và 1 đỉnh văn bản). Trọng số của các kết nối này là tham số học được, bằng việc huấn luyện các mô hình \textbf{Giai đoạn 4}, nhằm tìm ra cấu trúc tương quan tốt nhất.
+Luồng suy diễn trực tuyến dành cho người dùng cuối được minh họa tại \textbf{Hình \ref{fig:PredictionPipeline}}. Phân hệ này được thiết kế ưu tiên về tốc độ phản hồi và cho phép tích hợp linh hoạt các mô hình dự đoán tối ưu nhất.
 
-    \item \textbf{Giai đoạn 4 -- Suy luận phân tầng:} Đây là cơ chế ra quyết định được thiết kế nhằm tối ưu hóa việc sử dụng dữ liệu âm thanh. Hệ thống sử dụng song song hai mô hình MGAT + FastKAN/MLP gồm: mô hình được huấn luyện chỉ trên hai phương thức (hình ảnh và văn bản) và mô hình được huấn luyện trên cả ba phương thức (hình ảnh, văn bản và âm thanh).
-    \begin{itemize}[label={+}, itemsep=1pt]
-        \item Bước 4.1 -- Dự đoán nhãn thô: Hệ thống tiến hành dùng 2 mô hình MGAT + FastKAN/MLP đã đề cập ở bên trên để dự đoán và cho ra 2 nhãn thô.
-        
-        \item Bước 4.2 -- Ra quyết định: Dựa trên nhãn thô, hệ thống tiến hành xét rằng liệu 1 trong số các nhãn dự đoán được có dùng âm thanh hay không, cụ thể như sau: 
-        \begin{itemize}[label={\textbullet}, itemsep=1pt]
-            \item Trường hợp Có (Yes): Hệ thống sử dụng dữ liệu hình ảnh, văn bản cùng với âm thanh để đưa vào mô hình MGAT + FastKAN/MLP (ba phương thức) một lần nữa, nhằm dự đoán ra kết quả cuối cùng.
-            \item Trường hợp Không (No): Hệ thống sẽ ưu tiên nhãn thô có độ tin cậy cao hơn giữa 2 nhãn để cho ra kết quả cuối cùng.
-        \end{itemize}
-    \end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/PredictionPipeline.png}
+    \vspace{0.1cm}
+    \caption{Sơ đồ kiến trúc luồng đánh giá rủi ro}
+    \label{fig:PredictionPipeline}
+\end{figure}
+
+\textbf{Đặc tả dữ liệu:}
+\begin{itemize}[label={--}, itemsep=1pt]
+    \item \textbf{Đầu vào:} \texttt{Profile ID} (Định danh duy nhất của tài khoản trên nền tảng Lens Protocol) do người dùng hoặc hệ thống truyền vào để yêu cầu kiểm tra mức độ rủi ro Sybil.
+    \item \textbf{Đầu ra:} Phán quyết cuối cùng phân loại tài khoản vào một trong bốn nhãn: \texttt{BENIGN}, \texttt{LOW\_RISK}, \texttt{HIGH\_RISK}, hoặc \texttt{MALICIOUS}.
+\end{itemize}\vspace{0.2cm}
+
+\textbf{Chi tiết các giai đoạn xử lý:}
+\begin{itemize}[label={--}, itemsep=3pt]
+    \item \textbf{Giai đoạn 1 -- Định tuyến và truy xuất dữ liệu:} Khi tiếp nhận \texttt{Profile ID}, hệ thống thực hiện cơ chế định tuyến thông minh nhằm tối ưu hiệu năng. Nếu tài khoản đã tồn tại trong đồ thị tham chiếu, hệ thống sẽ truy xuất trực tiếp. Ngược lại, nếu là tài khoản hoàn toàn mới, hệ thống sẽ truy xuất dữ liệu trực tiếp qua API của Lens Protocol để thu thập thông tin đặc trưng nút và các cạnh liên kết của tài khoản này với mạng lưới hiện hữu.
+    
+    \item \textbf{Giai đoạn 2 -- Tái tạo đồ thị cục bộ:} Từ tập dữ liệu vừa truy xuất, hệ thống tiến hành xây dựng mạng lưới lân cận (Ego-network) xoay quanh tài khoản mục tiêu. Quá trình này kiến tạo một đồ thị cục bộ thu nhỏ bao gồm đầy đủ 4 tầng quan hệ, giúp khoanh vùng phạm vi ảnh hưởng và cung cấp bối cảnh cấu trúc mạng lưới cần thiết mà không đòi hỏi tài nguyên để tải toàn bộ đồ thị khổng lồ.
+    
+    \item \textbf{Giai đoạn 3 -- Dự đoán:} Đồ thị cục bộ được đưa vào lõi dự đoán áp dụng kiến trúc học máy tách rời. Đầu tiên, bộ mã hóa GNN nén thông tin đồ thị thành vector đặc trưng tiềm ẩn. Sau đó, mô hình phân lớp sẽ dựa vào vector này để đưa ra nhãn rủi ro cuối cùng.
 \end{itemize}
 
 \input{part-02/chap-02/sec-01/subsec-01/subsec-01}
 \input{part-02/chap-02/sec-01/subsec-02/subsec-02}
+\input{part-02/chap-02/sec-01/subsec-03/subsec-03}

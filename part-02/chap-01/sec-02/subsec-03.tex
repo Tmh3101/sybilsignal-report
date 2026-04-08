@@ -48,13 +48,6 @@ Với đặc thù phức tạp của mạng lưới SocialFi, đề tài không 
         
         \item Mô hình tích hợp \textbf{\textit{Multi-head Attention}} tương tự Transformer \cite{vaswani2017attention} để ổn định quá trình học, ghép nối ở tầng ẩn và lấy trung bình ở tầng đầu ra.
     \end{itemize}
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\linewidth]{images/part-02/chap-01/GAT.png}
-        \vspace{0.5cm}
-        \caption{Minh hoạ kiến trúc cơ bản của GAT}
-        \label{fig:GAT}
-    \end{figure}
 
     \item \textbf{Graph Convolutional Networks (GCN):} Dựa trên công trình nền tảng của Kipf và Welling \cite{kipf2016variational}, GCN sử dụng phép xấp xỉ bậc nhất của tích chập phổ đồ thị để lan truyền và tổng hợp thông tin. Trong khung thử nghiệm của đề tài, mô hình này được triển khai để đóng vai trò là thước đo đối chứng cơ sở. Khác biệt cốt lõi với cơ chế chú ý động của GAT là GCN sử dụng cơ chế tổng hợp mang đặc trưng của một bộ lọc tĩnh. Tính chất này được thể hiện qua công thức lan truyền đa tầng ở dạng ma trận:
     \[
@@ -98,7 +91,7 @@ Với đặc thù phức tạp của mạng lưới SocialFi, đề tài không 
 Với kiến trúc đồ thị đa quan hệ có trọng số, các thực thể tương tác thông qua 18 loại quan hệ khác nhau. Nếu biểu diễn các cạnh này theo phương pháp mã hóa One-hot 18 chiều và đưa trực tiếp vào mạng GNN, hệ thống sẽ gặp phải tình trạng bùng nổ tham số. Hiện tượng quá khớp trên tập dữ liệu thưa thớt. Để giải quyết triệt để rào cản này, đề tài thực hiện chuỗi tối ưu hóa tham số từ mức độ dữ liệu đến lõi kiến trúc:
 
 \begin{itemize}[label={--}, itemsep=5pt]
-        \item \textbf{Tối ưu kiến trúc GATv2 (Edge-augmented GATv2):} Để kiến trúc này tận dụng tối đa tham số $w_{ij}$ vừa được nén, đề tài áp dụng cơ chế \textit{dung hợp sớm trọng số cạnh}. Trọng số cạnh $w_{ij}$ được can thiệp trực tiếp vào quá trình tính toán hệ số chú ý thông qua phép cộng tuyến tính trước hàm kích hoạt phi tuyến:
+        \item \textbf{Tối ưu kiến trúc GATv2 (Edge-augmented GATv2):} Để kiến trúc này tận dụng tối đa tham số $w_{ij}$ vừa được nén, đề tài thiết lập cơ chế \textit{dung hợp sớm trọng số cạnh}. Trọng số cạnh $w_{ij}$ được tích hợp trực tiếp vào quá trình tính toán hệ số chú ý thông qua phép cộng tuyến tính trước hàm kích hoạt phi tuyến:
         \[
             e_{ij} = \vec{a}^T \text{LeakyReLU}\left( \mathbf{W}_n [h_i \| h_j] + \mathbf{W}_e w_{ij} \right)
         \]
@@ -120,13 +113,13 @@ Với kiến trúc đồ thị đa quan hệ có trọng số, các thực thể
             \]
             Tinh chỉnh này đảm bảo mô hình không bị mất mát tín hiệu hành vi, kết hợp hoàn hảo giữa hình học tô-pô và định lượng hành vi trên mạng xã hội phi tập trung.
 
-            \item \textbf{Principal Neighbourhood Aggregation (PNA):} Để khắc phục điểm mù về thông tin giao dịch của các toán tử thống kê, hệ thống áp dụng cơ chế dung hợp sớm thông qua mạng tiền xử lý \texttt{pre\_layers = 1} (kí hiệu là $\text{MLP}_{pre}$). Công thức truyền tin được nâng cấp toàn diện:
+            \item \textbf{Principal Neighbourhood Aggregation (PNA):} Để khắc phục điểm mù về thông tin giao dịch của các toán tử thống kê, hệ thống áp dụng cơ chế dung hợp sớm thông qua mạng tiền xử lý \texttt{pre\_layers = 1} (kí hiệu là $\text{MLP}_{pre}$). "Công thức truyền tin được tùy chỉnh mở rộng:
             \[
                 h_i^{(l+1)} = \text{MLP}_{post} \left( h_i^{(l)}, \bigoplus_{j \in \mathcal{N}(i)} \text{MLP}_{pre} \left( h_j^{(l)} \parallel w_{ij} \right) \right)
             \]
             Đặc trưng láng giềng $h_j$ buộc phải ghép nối và hòa trộn với $w_{ij}$ thành thông điệp hợp nhất trước khi đi qua khối thống kê $\bigoplus$. Nhờ vậy, độ lệch chuẩn ($\sigma$) sinh ra từ $\bigoplus$ chuyển sang đo lường sự biến thiên của lịch sử tương tác — một chỉ báo nhạy bén để bắt các mạng lưới Sybil có các hành vi rập khuôn.
 
-            \item \textbf{Graph Transformer Networks:} Để đối phó với kịch bản tấn công sao chép - nơi bot có vector hồ sơ giống hệt người thật, hệ thống tiêm trực tiếp trọng số $w_{ij}$ vào cả ma trận Khóa (\textit{Key}) và Giá trị (\textit{Value}). Công thức tổng hợp láng giềng được cập nhật thành:
+            \item \textbf{Graph Transformer Networks:} Để đối phó với kịch bản tấn công sao chép - nơi bot có vector hồ sơ giống hệt người thật. Kế thừa cơ chế của mạng UniMP, hệ thống tiêm trực tiếp trọng số $w_{ij}$ vào cả ma trận Khóa (\textit{Key}) và Giá trị (\textit{Value}). Công thức tổng hợp láng giềng được cập nhật thành:
             \[
                 h_i^{(l+1)} = \sum_{j \in \mathcal{N}(i)} \alpha_{ij} \left( \mathbf{W}_v h_j^{(l)} + \mathbf{W}_e w_{ij} \right)
             \]
