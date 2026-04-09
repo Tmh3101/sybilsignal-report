@@ -25,7 +25,7 @@ Trong đó $h_v^{(l)}$ là trạng thái ẩn của nút tại tầng $l$.
 
 \textbf{2.3.1. Các kiến trúc mạng nơ-ron đồ thị thực nghiệm}\vspace{0.2cm}
 
-Với đặc thù phức tạp của mạng lưới SocialFi, đề tài không giới hạn ở một kiến trúc duy nhất mà thiết lập một hệ thống thử nghiệm toàn diện. Năm kiến trúc GNN tiên tiến được triển khai và đánh giá để tìm ra mô hình nhận diện tài khoản giả mạo tối ưu nhất:
+Với đặc thù phức tạp của mạng lưới SocialFi, đề tài khôn    g giới hạn ở một kiến trúc duy nhất mà thiết lập một hệ thống thử nghiệm toàn diện. Năm kiến trúc GNN tiên tiến được triển khai và đánh giá để tìm ra mô hình nhận diện tài khoản giả mạo tối ưu nhất:
 
 \begin{itemize}[label={--}, itemsep=5pt]
     \item \textbf{Graph Attention Networks (GATv2):} Đóng vai trò là kiến trúc chủ đạo của hệ thống. GAT nguyên bản \cite{velickovic2017graph} tạo đột phá bằng cơ chế tự chú ý, nhưng bộc lộ giới hạn về "chú ý tĩnh", khiến mức độ quan trọng của láng giềng bị đánh giá toàn cục. Khắc phục rào cản này, Brody và cộng sự \cite{brody2021attentive} đã đề xuất GATv2 với cơ chế "chú ý động". Nhờ cơ chế chú ý động của GATv2, mô hình trở nên linh hoạt hơn trong việc phân bổ trọng số, từ đó bước đầu học được cách dồn sự chú ý vào các liên kết mang tín hiệu quyết định. Bản chất toán học của kiến trúc GATv2 nguyên bản được thể hiện qua các bước sau:
