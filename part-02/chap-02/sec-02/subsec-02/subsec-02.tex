@@ -1,90 +1,116 @@
 \subsubsection{2.2. Tiền xử lý dữ liệu}
-\indent\indent Quy trình tiền xử lý dữ liệu đóng vai trò then chốt trong việc chuẩn hóa đầu vào cho mô hình đa phương thức. Quy trình này được thực hiện tuần tự qua 5 bước chính như sau:\vspace{-0.1cm}
-\begin{itemize}[label={--}, itemsep=1pt]
-    \item \textbf{Bước 1 -- Phân đoạn video và phụ đề:} Chia tách video gốc thành các mẫu dữ liệu (video clip) có độ dài cố định, đồng thời trích xuất phụ đề tương ứng.
-    \item \textbf{Bước 2 -- Trích xuất hình ảnh và âm thanh:} Tách video clip thành chuỗi hình ảnh (frames) và các đoạn âm thanh (audio segments) theo tần số lấy mẫu quy định.
-    \item \textbf{Bước 3 -- Chuẩn hóa phụ đề:} Sử dụng các mô hình ngôn ngữ lớn (LLM) để hiệu chỉnh và làm sạch dữ liệu phụ đề.
-    \item \textbf{Bước 4 -- Tiền tính toán:} Trích xuất trước các đặc trưng văn bản và âm thanh, chuyển đổi sang định dạng vector/ma trận lưu trữ sẵn nhằm giảm tải chi phí tính toán trong quá trình huấn luyện.
-    \item \textbf{Bước 5 -- Phân chia tập dữ liệu:} Chia tách dữ liệu thành các tập Train, Val và Test.
+
+\textit{2.2.1. Xây dựng đặc trưng nút}\vspace{0.2cm}
+
+\indent Để tạo ra biểu diễn toàn diện cho mỗi thực thể trong mạng lưới, đề tài thực hiện tổng hợp biểu diễn ngữ nghĩa văn bản và các chỉ số hành vi định lượng, thiết lập một không gian đặc trưng hỗn hợp phục vụ mục tiêu phân loại Sybil.\vspace{0.3cm}
+
+Quá trình bắt đầu bằng việc xây dựng dữ liệu định danh từ các trường \texttt{handle}, \texttt{display\_name} và \texttt{bio}, được ghép nối theo cấu trúc: \texttt{"Handle: \{h\}. Name: \{n\}. Bio: \{b\}"}. Bằng cách giữ nguyên ngữ cảnh tự nhiên và các ký tự đặc biệt, đề tài sử dụng mô hình \textbf{all-MiniLM-L6-v2} để ánh xạ chuỗi văn bản thành vector ngữ nghĩa \textbf{384 chiều}.\vspace{0.3cm}
+
+Song song đó, 12 chỉ số hành vi định lượng — bao gồm cường độ tương tác nội dung, điểm tin cậy trên nền tảng và thời gian hoạt động — được trích xuất để mô tả đặc tính của nút. Các giá trị thiếu (\textit{NULL}) được mặc định gán bằng \textbf{0}. Kết quả phân tích trên phạm vi dữ liệu Quý tại \textbf{Hình \ref{fig:FeatureCorrelation}} minh chứng bộ đặc trưng này có độ bao phủ thông tin tốt. Mặc dù tồn tại sự tương quan cao giữa các hành vi cùng nhóm (như \texttt{total\_posts} và \texttt{total\_comments} với $r=0.86$), phần lớn các chỉ số còn lại đều duy trì tính độc lập cao.\vspace{0.3cm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/CorrelationHeatmapQuarter.png}
+    \caption{Ma trận tương quan đặc trưng hành vi trên phạm vi dữ liệu Quý}
+    \label{fig:FeatureCorrelation}
+\end{figure}
+
+Cuối cùng, vector đặc trưng của mỗi nút $v_i$ được hình thành thông qua phép ghép nối giữa vector ngữ nghĩa và vector hành vi:
+\[
+    X_i = [E_{semantic}(384) \parallel B_{behavioral}(12)] \in \mathbb{R}^{396}
+\]
+\indent Không gian đặc trưng \textbf{396 chiều} này đóng vai trò là dữ liệu đầu vào cho mô hình Graph Autoencoder và GNN baseline trong các quy trình gán nhãn giả lập và huấn luyện có giám sát ở các giai đoạn tiếp theo.\vspace{0.3cm}
+
+%==========================================================================================
+
+\textit{2.2.2. Chuẩn hóa trọng số liên kết đồ thị}\vspace{0.2cm}
+
+\indent Trong các mạng xã hội phi tập trung như Lens Protocol, tần suất tương tác giữa các thực thể thường tuân theo quy luật lũy thừa. Thực tế cho thấy một số ít các liên kết sở hữu số lượng tương tác cực lớn, tạo nên sự mất cân bằng nghiêm trọng về mặt dữ liệu và mô hình GNN dễ gặp phải hiện tượng quá mịn.\vspace{0.3cm}
+
+Để giải quyết vấn đề này, đề tài thực hiện chuẩn hóa trọng số cạnh thông qua hàm Logarithm nhằm nén biên độ của các liên kết quá mạnh nhưng vẫn bảo toàn được thứ tự ưu tiên của các tương tác. Trọng số cuối cùng của mỗi cạnh $e_{ij}$ được xác định theo công thức:
+
+\[
+    W_{final} = W_{base} \times \log(1 + \text{count})
+\]
+
+Trong đó, $W_{base}$ là trọng số cơ sở tương ứng với từng tầng quan hệ và \texttt{count} là tần suất tương tác thực tế.\vspace{0.3cm}
+
+Hiệu quả của quy trình chuẩn hóa được minh chứng rõ rệt qua kết quả thực nghiệm tại \textbf{Hình \ref{fig:EdgeWeightDist}}. Trước khi xử lý, đồ thị tồn tại các cạnh có trọng số thô lên tới $2614.64$, gây nhiễu loạn cho các mô hình GNN quá trình học. Sau khi áp dụng hàm Logarithm, trọng số lớn nhất đã được nén xuống mức $69.69$, đưa toàn bộ các liên kết về một dải giá trị ổn định và đồng nhất hơn.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/part-02/chap-02/sec-02/EdgeWeightDistributionQuarter.png}
+    \caption{So sánh phân phối trọng số cạnh trước và sau khi chuẩn hóa trên phạm vi Quý}
+    \label{fig:EdgeWeightDist}
+\end{figure}
+
+Việc điều chỉnh này không chỉ giúp mô hình GNN hội tụ nhanh hơn mà còn đảm bảo tính khách quan trong việc tổng hợp đặc trưng từ các láng giềng đa tầng, từ đó nâng cao khả năng nhận diện các mô thức Sybil tinh vi trong mạng lưới.
+
+% ==========================================================================================
+
+\subsubsection{2.3. Xây dựng tập dữ liệu giám sát}
+
+\indent\indent Do tính chất đặc thù của dữ liệu Web3 là thiếu hụt các nhãn thực tế, đề tài triển khai quy trình gán nhãn giả lập để xây dựng tập dữ liệu huấn luyện. Quy trình bắt đầu bằng việc sử dụng mô hình \textbf{Graph Autoencoder (GAE)} để nén không gian đặc trưng 396 chiều xuống không gian tiềm ẩn cấp thấp, qua đó bảo toàn cấu trúc liên kết đa tầng của đồ thị. Tiếp theo, thuật toán \textbf{K-Means} được áp dụng để gom cụm dựa trên sự tương đồng về vector embedding.\vspace{0.3cm}
+
+Cuối cùng, các cụm hành vi này được ánh xạ và hợp nhất thành 04 loại nhãn chính dựa trên phân tích đặc tính trung bình của từng nhóm:
+\begin{itemize}
+    \item \textbf{Benign:} Tài khoản hoạt động tự nhiên, có điểm tin cậy cao và tương tác xã hội ổn định.
+    \item \textbf{Low Risk:} Các tài khoản mới hoặc có tần suất hoạt động thấp nhưng chưa có dấu hiệu vi phạm.
+    \item \textbf{High Risk:} Nhóm có hành vi tương tác bất thường, tần suất cao trong thời gian ngắn, tiềm ẩn rủi ro spam.
+    \item \textbf{Malicious:} Các nút có sự tương đồng cực cao về tiểu sử và cấu trúc liên kết đồng sở hữu, đặc trưng của mạng lưới Sybil chuyên nghiệp.
 \end{itemize}
-%============================================================================
-\paragraph{2.2.1. Phân đoạn video và phụ đề}
-\indent\indent Từ nguồn dữ liệu thô ban đầu, thư viện \textit{ffmpeg} được sử dụng để phân đoạn các video gốc thành các video clip nhỏ, mỗi clip có thời lượng chuẩn là 1 phút. Đây được coi là một mẫu dữ liệu (sample) đầu vào.\vspace{0.3cm}
 
-Đối với việc xử lý phụ đề (định dạng \texttt{.srt} tải từ thư viện \textit{yt-dlp}), thách thức lớn nhất là sự không đồng bộ giữa mốc thời gian của phụ đề và thời điểm cắt video. Để khắc phục vấn đề này, quá trình cắt không được thực hiện theo cách ràng buộc cứng nhắc theo timestamp, mà thay vào đó áp dụng cơ chế cửa sổ chồng lấn (overlapping window). Nếu thời điểm bắt đầu hoặc kết thúc của một dòng phụ đề nằm trong khoảng thời gian của video clip, toàn bộ nội dung dòng phụ đề sẽ được giữ lại. Điều này đảm bảo ngữ nghĩa của câu nói không bị ngắt quãng, dù chấp nhận việc phụ đề có thể lấn sang khung thời gian trước hoặc sau video một khoảng nhất định.\vspace{0.3cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/LabelDistributionComparison.png}
+    \caption{Phân bổ nhãn giả lập qua các phạm vi thời gian thực nghiệm}
+    \label{fig:LabelDist}
+\end{figure}
 
-Sau quá trình cắt, bước lọc thủ công được tiến hành tiếp tục nhằm nâng cao chất lượng dữ liệu. Các video clip có thời lượng ngắn hơn 1 phút hoặc chứa nội dung nhiễu, không phù hợp với chủ đề của tập dữ liệu, sẽ bị loại bỏ trước khi đưa vào các giai đoạn xử lý và phân tích tiếp theo.\vspace{0.3cm}
-%============================================================================
-\paragraph{2.2.2. Trích xuất hình ảnh và âm thanh}
-\indent\indent Tại bước này, mỗi mẫu dữ liệu (video clip 1 phút) sẽ được tách thành hai thành phần phương thức riêng biệt sử dụng \textit{ffmpeg}:\vspace{-0.1cm}
-\begin{itemize}[label={--}, itemsep=1pt]
-    \item Đối với hình ảnh: Thực hiện lấy mẫu (sampling) với chu kỳ 4 giây/khung hình. Như vậy, mỗi mẫu dữ liệu sẽ cung cấp một danh sách gồm 15 hình ảnh.
-    \item Đối với âm thanh: Cũng thực hiện lấy mẫu với chu kỳ 5 giây/đoạn. Tương ứng mỗi mẫu dữ liệu sẽ cung cấp 12 đoạn âm thanh.
-\end{itemize}
-%============================================================================
-\paragraph{2.2.3. Chuẩn hóa phụ đề}
-\indent\indent Các đoạn phụ đề sau khi cắt sẽ được chuyển đổi sang định dạng văn bản thuần (\texttt{.txt}). Do đặc thù là văn bản nói và được tạo tự động, dữ liệu này thường chứa lỗi ngữ pháp, từ ngữ địa phương hoặc sai sót do nhận dạng âm thanh.\vspace{0.3cm}
+Kết quả phân bổ tại \textbf{Hình \ref{fig:LabelDist}} cho thấy quy mô của các nhóm nhãn tăng trưởng tỉ lệ thuận với phạm vi thời gian thu thập. Đáng chú ý, số lượng nhãn \textbf{Malicious} tăng mạnh từ 7 thực thể (phạm vi Tuần) lên 323 thực thể (phạm vi Quý). Điều này chứng minh rằng các mô thức tấn công Sybil có xu hướng lộ diện rõ nét hơn khi quan sát trên cấu trúc đồ thị ổn định dài hạn, nơi các mối quan hệ đa tầng được thiết lập đủ dày đặc để thực hiện các thuật toán phân tách hành vi.
 
-Để nâng cao chất lượng dữ liệu văn bản, đề tài đề xuất sử dụng các LLM như GPT-5.0, GPT-4o hoặc Gemini 2.5 Pro để thực hiện tác vụ làm mượt. Các mô hình này hỗ trợ hiệu chỉnh ngữ pháp, tái cấu trúc câu từ cho mạch lạc mà vẫn giữ nguyên ý nghĩa gốc. Sau đó, cần phải tiến hành rà soát thủ công lần cuối để loại bỏ các mẫu không đạt yêu cầu.\vspace{0.3cm}
+% ==========================================================================================
 
-Kết quả của quá trình này là một tập dữ liệu đa phương thức đã được chuẩn hóa. Mỗi mẫu dữ liệu bao gồm: 15 hình ảnh, 1 file văn bản và 12 đoạn âm thanh. Do dữ liệu được trích xuất từ video nên hình ảnh là loại dữ liệu bắt buộc. Đối với văn bản, dữ liệu này nằm rải rác ở các mẫu vì không phải video nào cũng có phụ đề. Riêng đối với âm thanh, đề tài chỉ giữ lại đặc trưng ở 4 lớp dữ liệu có tính chất lễ hội âm nhạc đặc thù là: \textit{hoi-lim}, \textit{le-hoi-nghinh-ong}, \textit{ok-om-bok} và \textit{via-ba-chua-xu-nui-sam}. Ở 4 lớp còn lại, do đặc trưng âm thanh không mang nhiều thông tin quan trọng nên cần loại bỏ chúng để tối ưu hóa mô hình.
-%============================================================================
-\paragraph{2.2.4. Tiền tính toán dữ liệu văn bản và âm thanh}
-\indent\indent Việc tính toán trước đặc trưng là bước quan trọng để tối ưu hóa thời gian huấn luyện, tuy nhiên chiến lược này được áp dụng linh hoạt tùy theo loại dữ liệu:\vspace{-0.1cm}
+\subsubsection{2.4. Chiến lược cân bằng và chia tập dữ liệu}
 
-\begin{itemize}[label={--}, itemsep=1pt]
-    \item Đối với dữ liệu hình ảnh: Đề tài quyết định không lưu trữ các đặc trưng đã tính toán trước vì chúng chiếm dung lượng lưu trữ rất lớn. Thay vào đó, các bước thay đổi kích thước (resize) và chuẩn hóa (normalize) sẽ được thực hiện trực tiếp trong quá trình huấn luyện. Cách tiếp cận này không chỉ tiết kiệm tài nguyên đĩa cứng mà còn tạo điều kiện thuận lợi cho việc thay đổi các mô hình CNN backbone trong kiến trúc.
-    \item Đối với dữ liệu văn bản: Thực hiện tính toán và lưu trữ đặc trưng vào các file tensor (\texttt{.pt}) để tránh lặp lại các thao tác xử lý ngôn ngữ tự nhiên tốn thời gian. Quy trình cụ thể bao gồm:\vspace{-0.1cm}
-    \begin{itemize}[label={+}, itemsep=1pt]
-        \item Sử dụng thư viện \textit{underthesea} để tách câu và gán nhãn từ loại (POS Tagging).
-        \item Loại bỏ stopwords và giữ lại các từ khóa quan trọng thuộc nhóm: danh từ (N), danh từ riêng (Np), động từ (V) và tính từ (A) như đã đề ra trước đó.
-        \item Sử dụng mô hình all-MiniLM-L6-v2 để tính toán vector embedding cho cả từ đơn lẻ và câu chứa từ đó (ngữ cảnh).
-    \end{itemize}
-    \item Đối với dữ liệu âm thanh: Sử dụng thư viện \textit{librosa} để trích xuất trước các đặc trưng quan trọng bao gồm MFCC, Delta và Delta-Delta. Để đảm bảo tính nhất quán về mặt cấu trúc dữ liệu đầu vào cho mô hình, các mẫu âm thanh trong cùng một đồ thị sẽ được xử lý để có cùng chiều thời gian (thông qua kỹ thuật padding). Các ma trận đặc trưng sau đó được nén và lưu trữ dưới định dạng \texttt{.npz} của thư viện \textit{numpy}, giúp truy xuất nhanh chóng trong quá trình huấn luyện.
-\end{itemize}
-%============================================================================
-\paragraph{2.2.5. Phân chia tập dữ liệu}
-\indent\indent Sau quá trình tiền xử lý, đề tài thu được một tập dữ liệu cân bằng gồm 8 lớp, với 300 mẫu dữ liệu cho mỗi lớp. Kế đến, tiến hành phân chia dữ liệu theo tỷ lệ 70:15:15 tương ứng cho các tập Train, Val và Test. Với chi tiết phân bố số lượng mẫu được trình bày trong \textbf{Bảng \ref{tab:DataSplit}}.
+\indent\indent Để đảm bảo tính khách quan và tối ưu hóa khả năng hội tụ của các mô hình, đề tài thực hiện thiết lập trọng số lớp và phân chia dữ liệu một cách hệ thống trên cả ba phạm vi thời gian nghiên cứu.\vspace{0.3cm}
+
+\textit{2.4.1. Xử lý mất cân bằng nhãn}\vspace{0.2cm}
+
+Sự chênh lệch đáng kể về số lượng giữa các lớp hành vi — đặc biệt là sự thiểu số của lớp \textit{Malicious}. Để khắc phục, đề tài áp dụng sử dụng trọng số lớp trong hàm mất mát. Trọng số được tính toán nghịch đảo với tần suất xuất hiện của mỗi lớp trong tập huấn luyện, buộc mô hình phải tăng cường sự tập trung vào các nhóm thực thể rủi ro cao.\vspace{0.3cm}
+
+Chi tiết các giá trị trọng số được áp dụng cho từng phạm vi dữ liệu được trình bày tại \textbf{Bảng \ref{tab:ClassWeights}}. Có thể thấy tại phạm vi Quý, lớp \textit{Malicious} được gán trọng số $3.8634$, cao hơn gấp 8 lần so với lớp \textit{High Risk} ($0.4786$), giúp đảm bảo độ nhạy trong việc nhận diện Sybil.
 
 \begin{table}[H]
     \centering
-    \caption{Phân bố số lượng mẫu dữ liệu cho từng tập}
-    \label{tab:DataSplit}
-    \setlength{\tabcolsep}{5pt}
-    \renewcommand{\arraystretch}{1.3} % cho các hàng dữ liệu
-    \begin{tabular}{lcccccc}
+    \caption{Trọng số lớp (Class Weights) tính toán trên tập huấn luyện}
+    \label{tab:ClassWeights}
+    \setlength{\tabcolsep}{8pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{|l|c|c|c|c|}
         \hline
-        \textbf{Tập dữ liệu}\rule{0pt}{16pt} & \textbf{Tỷ lệ (\%)} & \textbf{SL mẫu/lớp} & \textbf{Tổng SL mẫu} & \textbf{Tổng SL ảnh} & \textbf{Tổng SL từ} & \makecell[c]{\textbf{Tổng SL} \\ \textbf{âm thanh}} \\
-        \hline
-        Train & 70\% & 210 & 1 680 & 25 200 & 35 646 & 20 160 \\
-        Val & 15\% & 45 & 360 & 5 400 & 7 499 & 4 320 \\
-        Test & 15\% & 45 & 360 & 5 400  & 8 260 & 4 320 \\
-        \hline
-        \textbf{Tổng cộng} & \textbf{100\%} & \textbf{300} & \textbf{2 400} & \textbf{36 000} & \textbf{51 405} & \textbf{28 800} \\
-        \hline
+        \textbf{Phạm vi} & \textbf{BENIGN} & \textbf{LOW\_RISK} & \textbf{HIGH\_RISK} & \textbf{MALICIOUS} \\ \hline
+        Tuần  & 0.7250 & 1.4500 & 0.5724 & 5.4375 \\ \hline
+        Tháng & 1.2485 & 1.6980 & 0.4245 & 3.9306 \\ \hline
+        Quý   & 0.8273 & 2.2575 & 0.4786 & 3.8634 \\ \hline
     \end{tabular}
 \end{table}
 
-%============================================================================
-Ngoài ra, để làm rõ quy mô của dữ liệu đa phương thức được sử dụng, các biểu đồ thống kê số lượng thành phần hình ảnh, văn bản và âm thanh trong từng tập Train, Val và Test được trình bày ở phần dưới.
+\textit{2.4.2. Phân chia tập dữ liệu}\vspace{0.2cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/ModalNumberTrain.png}
-    \caption{\centering Biểu đồ thể hiện số lượng mẫu có ảnh, văn bản và âm thanh theo từng lớp trong tập Train}
-    \label{fig:ModalNumberTrain}
-\end{figure}
+Toàn bộ các thực thể trong mỗi phạm vi nghiên cứu được phân chia theo tỷ lệ cố định: 60\% dành cho huấn luyện (\textit{Train}), 20\% cho đánh giá (\textit{Validation}) và 20\% cho kiểm thử (\textit{Test}). Dữ liệu thực nghiệm tại phạm vi Quý ghi nhận quy mô lớn nhất với 2998 nút huấn luyện và 1000 nút kiểm thử, tạo điều kiện thuận lợi cho việc kiểm chứng khả năng tổng quát hóa của hệ thống trên dữ liệu thực tế quy mô lớn. Chi tiết phân bổ quy mô dữ liệu qua các phạm vi được tổng hợp tại \textbf{Bảng \ref{tab:DataSplitSize}}.
 
-\begin{figure}[H]
+\begin{table}[H]
     \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/ModalNumberVal.png}
-    \caption{\centering Biểu đồ thể hiện số lượng mẫu có ảnh, văn bản và âm thanh theo từng lớp trong tập Val}
-    \label{fig:ModalNumberVal}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/ModalNumberTest.png}
-    \caption{\centering Biểu đồ thể hiện số lượng mẫu có ảnh, văn bản và âm thanh theo từng lớp trong tập Test}
-    \label{fig:ModalNumberTest}
-\end{figure}
+    \caption{Quy mô phân chia tập dữ liệu qua các phạm vi thực nghiệm}
+    \label{tab:DataSplitSize}
+    \setlength{\tabcolsep}{12pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Phạm vi} & \textbf{Train (60\%)} & \textbf{Val (20\%)} & \textbf{Test (20\%)} & \textbf{Tổng số} \\ \hline
+        Tuần  & 87   & 29  & 30   & 146  \\ \hline
+        Tháng & 849  & 283 & 284  & 1416 \\ \hline
+        Quý   & 2998 & 999 & 1000 & 4997 \\ \hline
+    \end{tabular}
+\end{table}
