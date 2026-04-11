@@ -1,93 +1,58 @@
 \subsection{1. Giao diện sản phẩm}
-\indent\indent\textbf{Trang chủ:} Ứng dụng ICH Predictor được thiết kế tích hợp toàn bộ quy trình xử lý trên một trang duy nhất. Giao diện chính được minh hoạ tại \textbf{Hình} \ref{fig:TrangChu-1} và \textbf{Hình} \ref{fig:TrangChu-2}, bao gồm các nhóm chức năng chính: Quản lý tệp tin (Thêm tệp/Hoàn tất), Chọn mô hình và tiến hành dự đoán. Hệ thống hỗ trợ linh hoạt ba kịch bản dự đoán: đơn phương thức (chỉ ảnh), đa phương thức chỉ dùng hình ảnh và văn bản và đa phương thức toàn diện. Tương ứng với mỗi kịch bản, người dùng có thể lựa chọn các phiên bản mô hình đã được huấn luyện.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/TrangChu-1.png}}
-    \vspace{0.1cm}
-    \caption{Giao diện trang chủ -- Khu vực nhập liệu, thêm và hoàn tất tải tệp lên}
-    \label{fig:TrangChu-1}
-\end{figure}
+
+\indent\indent Hệ thống \textbf{SybilSignal} được hiện thực hóa dưới dạng một bảng điều khiển (Dashboard) tương tác, hỗ trợ song ngữ (Anh - Việt) nhằm tối ưu hóa khả năng tiếp cận dữ liệu Web3 quốc tế. Giao diện được thiết kế phân cấp thành hai phân hệ chiến lược: Xác minh thực thể và Khám phá mạng lưới.\vspace{0.3cm}
+
+\textit{1.1. Phân hệ xác minh thực thể}\vspace{0.2cm}
+
+Phân hệ này phục vụ mục đích kiểm định chuyên sâu và giải thích hành vi cho từng tài khoản cụ thể thông qua mã định danh hồ sơ (\texttt{profile\_id}).\vspace{0.3cm}
+
+\textbf{Quy trình xác minh:} Người dùng thực hiện nhập \texttt{profile\_id} vào hệ thống để kích hoạt quy trình truy vấn đặc trưng và suy luận nhãn dựa trên mô hình GNN đã được huấn luyện.
 
 \begin{figure}[H]
     \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/TrangChu-2.png}}
+    \fbox{\includegraphics[width=\linewidth]{images/part-02/chap-03/sec-01/InspectorInputSearch.png}}
     \vspace{0.1cm}
-    \caption{Giao diện trang chủ -- Khu vực hiển thị kết quả}
-    \label{fig:TrangChu-2}
+    \caption{Giao diện nhập mã định danh trong phân hệ Xác minh thực thể}
+    \label{fig:InspectorInputSearch}
 \end{figure}
 
-\newpage
-\textbf{Quản lý tệp tin:} Khi người dùng tương tác với chức năng "Thêm tệp", hệ thống hiển thị một cửa sổ cho phép tải lên dữ liệu. Tại đây, các tệp tin được kiểm tra tự động để đảm bảo tuân thủ các ràng buộc về định dạng và kích thước đã đề ra.
+\textbf{Trực quan hóa đồ thị cục bộ (Ego-graph):} Hệ thống hiển thị nhãn dự đoán kèm theo cấu trúc đồ thị cục bộ bao quanh nút mục tiêu. Giao diện cung cấp bộ công cụ tương tác mạnh mẽ để bóc tách các mối quan hệ:
+\begin{itemize}[label={--}, itemsep=1pt]
+    \item \textbf{Tùy chỉnh độ sâu quan hệ:} Hỗ trợ lựa chọn hiển thị láng giềng bậc 1 hoặc bậc 2 để mở rộng phạm vi phân tích cấu trúc mạng lưới.
+    \item \textbf{Tối ưu hóa hiển thị:} Cung cấp chức năng ẩn/hiện các cạnh không liên quan trực tiếp và gộp các cạnh giữa hai nút (\textit{Edge Bundling}) để giảm nhiễu trực quan.
+    \item \textbf{Trực quan hệ số chú ý:} Hệ thống hiển thị trọng số chú ý (\textit{GAT Attention Weight}) trực tiếp trên từng cạnh, cho thấy mức độ quan trọng của từng láng giềng đóng góp vào quyết định phân loại của mô hình.
+\end{itemize}
+
 \begin{figure}[H]
     \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/ThemTep.png}}
+    \fbox{\includegraphics[width=\linewidth]{images/part-02/chap-03/sec-01/InspectorResultGraph.png}}
     \vspace{0.1cm}
-    \caption{Giao diện modal cho phép thêm tệp tin đa phương thức}
-    \label{fig:ThemTep}
+    \caption{Giao diện hiển thị kết quả xác minh và đồ thị tương tác cục bộ}
+    \label{fig:InspectorResultGraph}
 \end{figure}
 
-\textbf{Hoàn tất tải lên:} Sau khi lựa chọn dữ liệu, người dùng xác nhận bằng nút "Hoàn tất". Lúc này, dữ liệu và nội dung mô tả được đẩy lên máy chủ để kích hoạt quy trình tiền xử lý (bao gồm phân tách video và trích xuất đặc trưng sơ bộ). Cơ chế này giúp tối ưu hóa thời gian phản hồi khi thực hiện lệnh dự đoán sau đó. Hình minh họa dưới đây thể hiện trạng thái khi dữ liệu đã được đồng bộ thành công lên máy chủ.
+\textbf{Tính giải thích thông qua dữ liệu tham chiếu:} Điểm vượt trội của phân hệ này là khả năng giải thích (\textit{Explainability}). Khi tương tác với các nút, hệ thống truy xuất thông tin chi tiết từ tập dữ liệu tham chiếu (kết quả quy trình GAE + KMeans). Việc đối chiếu giữa kết quả dự đoán hiện tại và lý do gán nhãn lịch sử giúp chuyên gia hiểu rõ "mô thức" hành vi mà mô hình đang sử dụng để nhận diện Sybil.\vspace{0.3cm}
+
+\textit{1.2. Phân hệ khám phá mạng lưới}\vspace{0.2cm}
+
+Phân hệ này cho phép phân tích các cụm dữ liệu diện rộng theo phạm vi thời gian và cấu hình tham số linh hoạt để nhận diện các mô thức bầy đàn.\vspace{0.3cm}
+
+\textbf{Cấu hình tham số và siêu tham số:} Người dùng có thể thiết lập các ràng buộc về thời gian và giới hạn quy mô nút. Đặc biệt, giao diện hỗ trợ điều chỉnh các siêu tham số huấn luyện như số vòng lặp (\textit{Epochs}), tốc độ học (\textit{Learning Rate}) và ngưỡng dừng sớm (\textit{Patience}).
+
 \begin{figure}[H]
     \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/UploadThanhCong.png}}
+    \fbox{\includegraphics[width=\linewidth]{images/part-02/chap-03/sec-01/DiscoveryInputConfig.png}}
     \vspace{0.1cm}
-    \caption{Giao diện hiển thị trạng thái tải tệp và nội dung mô tả thành công}
-    \label{fig:UploadThanhCong}
+    \caption{Giao diện thiết lập phạm vi dữ liệu và siêu tham số trong phân hệ khám phá}
+    \label{fig:DiscoveryInputConfig}
 \end{figure}
 
-\newpage
-\textbf{Kết quả dự đoán:} Người dùng lựa chọn kiến trúc mô hình mong muốn (ví dụ: MobileNetV3 Small) và kích hoạt quá trình dự đoán. Hệ thống sẽ trả về kết quả bao gồm nhãn chủ đề văn hóa dự đoán và chỉ số độ tin cậy tương ứng.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/KetQua.png}}
-    \vspace{0.1cm}
-    \caption{\centering Giao diện hiển thị kết quả dự đoán với mô hình backbone MobileNetV3 Small}
-    \label{fig:KetQua}
-\end{figure}
+\textbf{Trực quan hóa mạng lưới tổng thể:} Sau khi xử lý, hệ thống trả về đồ thị liên kết đa tầng của toàn bộ các nút trong phạm vi truy vấn. Công cụ này giúp nhận diện các cụm Sybil hoạt động có tổ chức thông qua các cấu trúc liên kết đặc khít trên tầng \textit{Co-owner} và \textit{Similarity}.
 
-\textbf{Đồ thị:} Đối với các kịch bản dự đoán đa phương thức, khu vực kết quả cung cấp thêm công cụ trực quan hóa cấu trúc đồ thị. Giao diện này cho phép người dùng xem xét danh sách các nút (đỉnh) tham gia vào quá trình suy luận và hiển thị trực quan các kết nối giữa chúng.
 \begin{figure}[H]
     \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/DoThi.png}}
+    \fbox{\includegraphics[width=\linewidth]{images/part-02/chap-03/sec-01/DiscoveryResultGlobal.png}}
     \vspace{0.1cm}
-    \caption{Giao diện công cụ trực quan hóa đồ thị cho mô hình MGAT + FastKAN/MLP}
-    \label{fig:DoThi}
-\end{figure}
-
-\newpage
-\textbf{Danh sách nút hình ảnh:} Khi bấm vào nút "Danh sách nút", người dùng có thể tùy chọn các nút hình ảnh cụ thể để hiển thị. Đồng thời, hệ thống cung cấp các bộ lọc để lọc các cạnh kết nối dựa trên ngưỡng trọng số (hiển thị top \% các cạnh có trọng số cao nhất), giúp giảm nhiễu khi quan sát.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/DSNut-HinhAnh.png}}
-    \vspace{0.1cm}
-    \caption{Giao diện danh sách nút cho phương thức hình ảnh}
-    \label{fig:DSNut-HinhAnh}
-\end{figure}
-
-\textbf{Danh sách nút văn bản:} Tương tự như hình ảnh, khu vực này liệt kê các các nút gồm các từ đã được phân tách từ văn bản theo quy tắc đã đề ra ở các phần trên, tại đây người dùng cũng có thể chọn các từ cần trực quan hoá để hiển thị ra đồ thị.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/DSNut-VanBan.png}}
-    \vspace{0.1cm}
-    \caption{Giao diện danh sách nút cho phương thức văn bản}
-    \label{fig:/DSNut-VanBan}
-\end{figure}
-
-\newpage
-\textbf{Danh sách nút âm thanh:} Khu vực này quản lý các nút đại diện cho đoạn âm thanh. Đặc biệt, hệ thống tích hợp trình phát media mini, cho phép người dùng nghe lại trực tiếp nội dung của đoạn âm thanh đó bằng cách nhấn vào biểu tượng phát.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/DSNut-AmThanh.png}}
-    \vspace{0.1cm}
-    \caption{Giao diện danh sách nút cho phương thức âm thanh}
-    \label{fig:DSNut-AmThanh}
-\end{figure}
-
-\textbf{Kết quả hiển thị đồ thị:} Hình minh họa dưới đây thể hiện cấu trúc đồ thị đa phương thức được trực quan hóa với bộ lọc 60\% trọng số cạnh cao nhất. Giao diện hỗ trợ tương tác toàn diện, cho phép người dùng phóng to, thu nhỏ và kéo thả các đỉnh để khám phá cấu trúc liên kết ngữ nghĩa giữa các phương thức.
-\begin{figure}[H]
-    \centering
-    \fbox{\includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-01/KetQuaDoThi.png}}
-    \vspace{0.1cm}
-    \caption{\centering Giao diện hiển thị đồ thị tương tác}
-    \label{fig:KetQuaDoThi}
+    \caption{Giao diện trực quan hóa đồ thị mạng lưới diện rộng và phân bổ nhãn}
+    \label{fig:DiscoveryResultGlobal}
 \end{figure}

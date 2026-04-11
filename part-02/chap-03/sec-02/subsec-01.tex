@@ -1,109 +1,73 @@
 \subsubsection{2.1. Các thông số cho huấn luyện và kiểm thử}
 
-\paragraph{2.1.1. Tham số mô hình, siêu tham số và kỹ thuật huấn luyện}
-\indent\indent Về cấu hình tham số, đề tài áp dụng chiến lược đóng băng toàn bộ kiến trúc CNN backbone trong việc huấn luyện baseline và huấn luyện mô hình MGAT + FastKAN. Ngoài ra, mô hình ngôn ngữ all-MiniLM-L6-v2 cũng được sử dụng ở chế độ đóng băng để trích xuất đặc trưng văn bản. Do đó, tổng số lượng tham số (Total Params) của hệ thống bao gồm cả phần đóng băng và phần có thể huấn luyện (Trainable Params). Chi tiết thống kê tham số cho từng kịch bản cụ thể như sau:
+\textit{2.1.1. Tham số mô hình, siêu tham số và kỹ thuật huấn luyện}\vspace{0.2cm}
 
-\vspace{0.3cm}
-%===================================================================
-\textbf{* CNN Baseline:}
+\indent Trong quá trình thực nghiệm, đề tài áp dụng hai chiến lược huấn luyện khác nhau tùy thuộc vào kiến trúc mô hình. Đối với các mô hình GNN cơ sở, quy trình huấn luyện được thực hiện theo phương thức học có giám sát từ đầu đến cuối. Ngược lại, đối với kiến trúc \textbf{Decoupled GNN-ML}, hệ thống sử dụng GNN như một bộ trích xuất đặc trưng tĩnh bằng cách đóng băng toàn bộ trọng số sau khi đã tối ưu hóa, sau đó trích xuất các vector embedding để huấn luyện các bộ phân lớp máy học truyền thống.\vspace{0.3cm}
+
+\textbf{* Thống kê tham số mô hình:}
+Đối với các mô hình GNN cơ sở được huấn luyện từ đầu, toàn bộ các trọng số đều tham gia vào quá trình tối ưu hóa. Chi tiết độ phức tạp của các mạng GNN được trình bày tại \textbf{Bảng \ref{tab:ModelParamsComp}}.
+
 \begin{table}[H]
     \centering
-    \caption{Thống kê số lượng tham số của các mô hình CNN Baseline}
-    \label{tab:CNNBaselineParams}
-    \renewcommand{\arraystretch}{1.15}
-    \begin{tabular}{lcccc}
-        \hline
-        \textbf{Mô hình} & \textbf{Trainable Params} & \textbf{Total Params} \\
-        \hline
-        ResNet18              & 4.1K & 11.2M \\
-        RegNetX400MF          & 3.2K & 5.1M \\
-        MobileNetV3 Large     & 7.7K & 3.0M \\
-        MobileNetV3 Small     & 4.6K & 1.0M \\
-        DenseNet121           & 8.2K & 7.0M \\
-        ShuffleNetV2 1.0x     & 8.2K & 1.3M \\
-        \hline
-    \end{tabular}
-\end{table}
-
-%===================================================================
-\newpage
-\textbf{* CNN backbone + MGAT + FastKAN/MLP:}
-\begin{table}[H]
-    \centering
+    \caption{Thống kê số lượng tham số của các kiến trúc mô hình thực nghiệm}
+    \label{tab:ModelParamsComp}
     \renewcommand{\arraystretch}{1.2}
-    \setlength{\tabcolsep}{6pt}
-    \caption{\centering Thống kê số lượng tham số của mô hình CNN backbone + MGAT + FastKAN/MLP}
-    \begin{tabular}{llcccc}
+    \setlength{\tabcolsep}{15pt}
+    \begin{tabular}{llc}
         \hline
-        \textbf{Backbone Model (+ MGAT)} & \textbf{Classifier} & \textbf{Trainable Params} & \textbf{Total Params} \\
+        \textbf{Nhóm mô hình} & \textbf{Kiến trúc} & \textbf{Total Params} \\
         \hline
-        % ResNet18
-        \multirow{2}{*}{ResNet18} 
-        & FastKAN & 4.9M & 38.8M \\
-        & MLP & 4.1M & 38.0M \\
+        Học không giám sát & GAE (GATv2 Encoder) & 106.2K \\
         \hline
-        % RegNetX400MF
-        \multirow{2}{*}{RegNetX400MF} 
-        & FastKAN & 4.9M & 32.7M \\
-        & MLP & 4.1M & 31.9M \\
-        \hline
-        % MobileNetV3 Large
-        \multirow{2}{*}{MobileNetV3 Large} 
-        & FastKAN & 5.1M & 30.8M \\
-        & MLP & 4.3M & 30.0M \\
-        \hline
-        % MobileNetV3 Small
-        \multirow{2}{*}{MobileNetV3 Small} 
-        & FastKAN & 5.0M & 28.6M \\
-        & MLP & 4.2M & 27.8M \\
-        \hline
-        % DenseNet121
-        \multirow{2}{*}{DenseNet121} 
-        & FastKAN & 5.2M & 34.8M \\
-        & MLP & 4.4M & 34.0M \\
-        \hline
-        % ShuffleNetV2
-        \multirow{2}{*}{ShuffleNetV2 1.0x} 
-        & FastKAN & 5.2M & 29.1M \\
-        & MLP & 4.4M & 28.3M \\
+        \multirow{5}{*}{GNN Baselines} 
+        & GATv2 & 106.3K \\
+        & GCN & 13.3K \\
+        & GINE & 87.5K \\
+        & Transformer & 211.7K \\
+        & PNA & 647.6K \\
         \hline
     \end{tabular}
-    \label{tab:PipelineFullParams}
 \end{table}
 
-%===================================================================
-\textbf{* Các siêu tham số và kỹ thuật huấn luyện:}
-Quá trình huấn luyện được thực hiện thống nhất với bộ siêu tham số sau:
+Đối với kiến trúc \textbf{Decoupled GNN-ML}, cấu trúc mô hình là sự tổ hợp linh hoạt giữa các mạng GNN cơ sở và các thuật toán học máy truyền thống (KNN, LinearSVC, Random Forest, XGBoost) để phân lớp. Trong phương pháp tiếp cận này, toàn bộ trọng số của phần mạng GNN đã được huấn luyện trước và đóng băng hoàn toàn. Do đó, số lượng tham số cần cập nhật thực tế phụ thuộc hoàn toàn vào bộ phân lớp máy học được lựa chọn. Điều này giúp giảm thiểu đột phá chi phí và thời gian tính toán trong pha huấn luyện bộ phân lớp.\vspace{0.3cm}
+
+\textbf{* Siêu tham số cho quy trình gán nhãn giả lập (GAE \& KMeans):}\vspace{0.2cm}
+
+Quy trình xây dựng nhãn giả lập sử dụng mô hình GAE với Encoder là GATv2 (32 hidden units, 4 heads) để nén đặc trưng về không gian 16 chiều. Chiến lược huấn luyện và phân cụm được tùy chỉnh theo từng phạm vi dữ liệu:
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item Epoch: 100.
-    \item Batch size: 8.
-    \item Accumulation steps: 2 (Kỹ thuật tích lũy gradient này giúp mô phỏng kích thước batch thực tế là 16, cho phép mô hình hội tụ ổn định hơn mà vẫn tiết kiệm bộ nhớ VRAM)
-    \item Early Stopping: Cơ chế dừng sớm được kích hoạt với patience = 10. Nếu sau 10 epoch liên tiếp giá trị \textit{validation loss} không cải thiện, quá trình huấn luyện sẽ tự động kết thúc.
-    \item Optimizer: \textit{AdamW} với tốc độ học khởi tạo \textit{lr = 1e-4} và trọng số suy giảm \textit{weight\_decay = 1e-5}.
-    \item Scheduler: Sử dụng chiến lược \textit{ReduceLROnPlateau} để tự động giảm tốc độ học (factor=0.5) nếu loss không giảm sau 3 epoch (patience=3).
-    \item Drop Node (Augmentation): Để tăng khả năng tổng quát hóa của mô hình, tôi áp dụng kỹ thuật loại bỏ ngẫu nhiên các đỉnh ngay trong quá trình huấn luyện. Quy trình bao gồm 2 lượt drop liên tiếp:
-    \begin{itemize}[label={+}, itemsep=1pt]
-        \item Hình ảnh: Lần 1 (tỷ lệ 0.2), Lần 2 (tỷ lệ 0.3).
-        \item Văn bản: Lần 1 (tỷ lệ 0.3), Lần 2 (tỷ lệ 0.4). Đặc biệt, áp dụng ràng buộc min\_not\_drop = 10 để đảm bảo mỗi mẫu luôn giữ lại ít nhất 10 từ khóa quan trọng, tránh làm mất mát hoàn toàn ngữ nghĩa của mô tả.
-        \item Âm thanh: Lần 1 (tỷ lệ 0.2), Lần 2 (tỷ lệ 0.3).
-    \end{itemize}
-    Tỷ lệ drop cao hơn được áp dụng cho văn bản vì số lượng đỉnh của phương thức này chiếm đa số trong đồ thị và có độ biến động cao, trong khi số lượng đỉnh hình ảnh và âm thanh là cố định (lần lượt là 15 hình ảnh và 12 đoạn âm thanh). Thống kê phân bố số lượng từ trong tập huấn luyện được thể hiện tại \textbf{Hình \ref{fig:ThongKeTongSoTu}} và \textbf{Hình \ref{fig:ThongKeTBSoTu}}.
+    \item \textbf{Phạm vi Tuần/Tháng:} Huấn luyện trong 1000 epoch; Adam optimizer ($lr=0.005$); Early stopping với $patience=100$. Thuật toán KMeans thực hiện tìm kiếm số cụm $K$ tối ưu trong khoảng $[5, 15]$ cho phạm vi tuần và $[110, 130]$ cho phạm vi tháng.
+    \item \textbf{Phạm vi Quý:} Do quy mô đồ thị lớn và phức tạp hơn, số epoch được tăng lên 5000; ngưỡng dừng sớm $patience=200$; tối ưu số cụm $K$ trong khoảng $[160, 180]$.
 \end{itemize}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-02/ThongKeTongSoTu.png}
-    \caption{Biểu đồ thống kê tổng số từ vựng trên tập Train}
-    \label{fig:ThongKeTongSoTu}
-\end{figure}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{images/part-02/chap-03/sec-02/ThongKeTBSoTu.png}
-    \caption{Biểu đồ thống kê số lượng từ (Min, Avg, Max) trên tập Train}
-    \label{fig:ThongKeTBSoTu}
-\end{figure}
+\textbf{* Siêu tham số và kỹ thuật huấn luyện GNN Baselines:}\vspace{0.2cm}
 
-\paragraph{2.1.2. Chiến lược kiểm thử}
-\indent\indent Quy trình kiểm thử tuân thủ nguyên tắc best model checkpoint. Trong quá trình huấn luyện, tại cuối mỗi epoch, nếu giá trị \textit{val\_loss < best\_val\_loss}, trạng thái trọng số của mô hình sẽ được lưu lại. Khi quá trình huấn luyện kết thúc (do hoàn thành 100 epoch hoặc early stopping), hệ thống sẽ tải lại phiên bản trọng số tốt nhất này để thực hiện đánh giá trên tập Test, đảm bảo kết quả phản ánh đúng năng lực của mô hình.\vspace{0.3cm}
+Để đảm bảo tính khách quan, giảm thiểu sự ảnh hưởng của việc khởi tạo ngẫu nhiên và khẳng định khả năng tái lập, mỗi mô hình Baseline được huấn luyện và đánh giá lặp lại độc lập 05 lần với các hạt giống ngẫu nhiên cố định. Kết quả hiệu năng cuối cùng của mỗi mô hình được báo cáo dưới dạng giá trị trung bình cộng kèm độ lệch chuẩn (\textit{Mean} $\pm$ \textit{Std}) của các lượt chạy.\vspace{0.2cm}
 
-Bên cạnh đó, nhằm đảm bảo tính khách quan và độ ổn định của quá trình huấn luyện cũng như các kết quả kiểm thử, đề tài sử dụng ba giá trị \textit{random seed} khác nhau, lần lượt là 1023, 123 và 42 (trong đó seed 42 được sử dụng cho kỹ thuật \textit{drop node}). Kết quả cuối cùng được báo cáo dưới dạng giá trị trung bình của ba lần huấn luyện và kiểm thử độc lập.
+Quá trình huấn luyện áp dụng chung một bộ thiết lập siêu tham số và kỹ thuật như sau:
+\begin{itemize}[label={--}, itemsep=1pt]
+    \item \textbf{Cấu hình tham số tối ưu:} 
+    \begin{itemize}[label={+}, itemsep=1pt]
+        \item Thuật toán tối ưu: \textbf{Adam} (\textit{Adaptive Moment Estimation}).
+        \item Tốc độ học khởi tạo (\textit{Learning rate}): $lr = 10^{-3}$.
+        \item Trọng số điều chuẩn L2 (\textit{Weight decay}): $5 \times 10^{-4}$ nhằm hạn chế sự bùng nổ của các trọng số và ngăn ngừa hiện tượng quá khớp.
+        \item \textit{Max Epochs}: 2000.
+    \end{itemize}
+    
+    \item \textbf{Hàm mất mát:} Đề tài sử dụng hàm \textbf{Weighted Cross-Entropy}. Thay vì tính lỗi đồng đều cho mọi mẫu dữ liệu, hàm này tích hợp trực tiếp các giá trị \textit{Class Weights} (đã được tính toán dựa trên phân phối thực tế của từng phạm vi ở Chương 2).
+    
+    \item \textbf{Cơ chế dừng sớm:} Để tối ưu hóa thời gian huấn luyện và lưu lại phiên bản mô hình có khả năng tổng quát hóa tốt nhất, hệ thống giám sát liên tục chỉ số \textbf{Macro F1-Score} trên tập kiểm định. Cơ chế dừng sớm được kích hoạt với ngưỡng kiên nhẫn \textit{patience} = 200. Nghĩa là, nếu sau 200 epoch liên tiếp mà chỉ số \textit{Validation Macro F1} không ghi nhận kỷ lục mới, quá trình huấn luyện sẽ tự động chấm dứt.
+\end{itemize}
+
+\textbf{* Cấu hình kiến trúc phân lớp tách rời (Decoupled GNN-ML):}\vspace{0.2cm}
+
+Tại giai đoạn này, hệ thống nạp trọng số tốt nhất của GNN để trích xuất vector nhúng 16 chiều thông qua cơ chế \textit{forward hook} tại tầng tích chập cuối cùng. Các vector này được chuẩn hóa qua \textit{StandardScaler} trước khi đưa vào 04 bộ phân lớp:
+\begin{itemize}[label={--}, itemsep=1pt]
+    \item \textbf{KNN:} $k=5$, gán trọng số dựa trên khoảng cách (\textit{distance weighting}).
+    \item \textbf{LinearSVC:} Cấu hình \textit{max\_iter=3000} và tích hợp trọng số lớp.
+    \item \textbf{Random Forest:} Sử dụng 100 cây quyết định (\textit{n\_estimators}).
+    \item \textbf{XGBoost:} Sử dụng hàm mục tiêu \textit{multi:softprob} phục vụ phân loại đa lớp và tối ưu dựa trên \textit{mlogloss}.
+\end{itemize}
+
+\textit{2.1.2. Chiến lược kiểm thử}\vspace{0.2cm}
+
+Quy trình kiểm thử tuân thủ nghiêm ngặt nguyên tắc \textit{Best Model Checkpoint}. Tại mỗi epoch huấn luyện, nếu giá trị \textit{Validation Macro F1} đạt kỷ lục mới, toàn bộ trạng thái trọng số của mô hình sẽ được lưu trữ. Sau khi kết thúc huấn luyện, thực hiện tải trọng số tốt nhất để thực hiện đánh giá cuối cùng trên tập kiểm thử (\textit{Test set}). Chiến lược này đảm bảo rằng các kết quả thu được phản ánh chính xác năng lực tổng quát hóa cao nhất của mô hình.

@@ -1,18 +1,21 @@
-\newpage
 \subsection{2. Kết quả thực nghiệm}
-Việc huấn luyện và thực nghiệm mô hình được tiến hành trên nhiều máy chủ khác nhau, với các cấu hình phần cứng như sau:
+
+\indent\indent Toàn bộ chu trình thực nghiệm mô hình \textbf{SybilSignal} — từ khai thác dữ liệu qua BigQuery, huấn luyện GAE/GNN, đến đánh giá các mô hình — được thực hiện nhất quán trên nền tảng \textbf{Google Colab}. Chi tiết cấu hình phần cứng và các thư viện phần mềm phục vụ cho mục đích thực nghiệm và đánh giá được trình bày dưới đây:
+
 \begin{itemize}[label={--}, itemsep=1pt]
-    \item \textbf{Hệ điều hành:} Debian 11
-    \item \textbf{RAM:} từ 192 GiB đến 512 GiB
-    \item \textbf{CPU:} Intel Xeon Silver/Gold và AMD EPYC
-    \item \textbf{GPU:} Nvidia Quadro RTX 6000 (23 GiB) và Nvidia A40 (45 GiB)
-    \item \textbf{Thư viện:} Sử dụng các thư viện phổ biến cho từng tác vụ như:
+    \item \textbf{Cấu hình phần cứng thực nghiệm (Google Colab):}
     \begin{itemize}[label={+}, itemsep=1pt]
-        \item Xây dựng các mô hình học sâu: torch (2.9.0), torchvision (0.24.0), torch-geometric (2.7.0), fastkan\footnote{\url{https://github.com/ZiyaoLi/fast-kan}}.
-        \item Xử lý ảnh và CNN backbone: torchvision (0.24.0), pillow (12.0.0).
-        \item Xử lý văn bản: underthesea (8.3.0) cho tách câu, tokenization và POS tagging; sentence-transformers (5.1.2) cho tạo embedding văn bản.
-        \item Xử lý âm thanh: librosa (0.11.0).
-        \item Hỗ trợ mô hình máy học truyền thống và các thang đo đánh giá: numpy (2.3.4), pandas (2.3.3), scikit-learn (1.7.2).
+        \item \textbf{Hệ điều hành:} Ubuntu 22.04.3 LTS.
+        \item \textbf{GPU:} NVIDIA Tesla T4 (16 GiB GDDR6).
+        \item \textbf{RAM:} 12.7 GiB System RAM.
+        \item \textbf{CPU:} Intel(R) Xeon(R) CPU @ 2.20GHz.
+    \end{itemize}
+    
+    \item \textbf{Hệ thống thư viện và công cụ:}
+    \begin{itemize}[label={+}, itemsep=1pt]
+        \item \textbf{Khai thác và xử lý dữ liệu:} \texttt{google-cloud-bigquery} để truy vấn dữ liệu từ Lens Protocol; \texttt{pandas} và \texttt{numpy} phục vụ lưu trữ và biến đổi ma trận đặc trưng.
+        \item \textbf{Học sâu và phân tích đồ thị:} \texttt{torch} và \texttt{torch-geometric} để xây dựng các kiến trúc GNN; \texttt{sentence-transformers} và \texttt{transformers} cho quy trình nhúng ngữ nghĩa văn bản.
+        \item \textbf{Đánh giá và Lưu trữ mô hình:} \texttt{scikit-learn} tính toán các thang đo hiệu năng (Macro F1, AUC-ROC);
     \end{itemize}
 \end{itemize}
 
