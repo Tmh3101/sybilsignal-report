@@ -17,20 +17,38 @@
     \begin{tabular}{|l|c|l|}
         \hline
         \textbf{Phạm vi} & \textbf{Khoảng thời gian} & \textbf{Ý nghĩa thực nghiệm} \\ \hline
-        Theo Tuần & 01/12/2025 -- 07/12/2025 & Nhận diện các đợt tấn công chớp nhoáng. \\ \hline
-        Theo Tháng & 01/12/2025 -- 31/12/2025 & Theo dõi tính duy trì hành vi xã hội. \\ \hline
-        Theo Quý & 01/10/2025 -- 31/12/2025 & Quan sát cấu trúc đồ thị ổn định dài hạn. \\ \hline
+        Tuần & 01/12/2025 -- 07/12/2025 & Nhận diện các đợt tấn công chớp nhoáng. \\ \hline
+        Tháng & 01/12/2025 -- 31/12/2025 & Theo dõi tính duy trì hành vi xã hội. \\ \hline
+        Quý & 01/10/2025 -- 31/12/2025 & Quan sát cấu trúc đồ thị ổn định dài hạn. \\ \hline
     \end{tabular}
 \end{table}
 
-Quy trình trích xuất dữ liệu với \textit{Google BigQuery} được thực hiện chặt chẽ dựa trên các đặc tả kỹ thuật của Lens Protocol. Toàn bộ các câu lệnh SQL đều áp dụng ràng buộc thời gian nghiêm ngặt dựa trên trường \texttt{created\_on} để giới hạn chính xác phạm vi nghiên cứu trong các phạm vi thời gian đã định. Đồng thời, nhằm tối ưu hóa cấu trúc đồ thị đa tầng và nâng cao chất lượng học biểu diễn, hệ thống thực hiện lọc bỏ các nút cô lập, những tài khoản không phát sinh bất kỳ liên kết nào với các tài khoản còn lại trong khung thời gian khảo sát. Thao tác này không chỉ là một thủ tục kỹ thuật nhằm tối ưu hóa tài nguyên tính toán, mà còn dựa trên nền tảng triết lý về tính chuẩn hóa trong thực nghiệm GNN của Shchur và cộng sự \cite{shchur2018pitfalls}. Theo quan điểm của nghiên cứu này, việc giữ lại các nút cô lập trong tập dữ liệu thực nghiệm có thể dẫn đến "pha loãng" kết quả đánh giá, làm lu mờ sức mạnh thực sự của các hàm tổng hợp láng giềng, vốn là giá trị cốt lõi của cơ chế truyền tin. Đối với hệ thống \textbf{SybilSignal}, bước chuẩn hóa này đóng vai trò giúp các mô hình có thể đưa ra các dự đoán dựa trên tri thức cấu trúc mạng lưới thay vì chỉ phụ thuộc vào các thuộc tính định danh đơn thuần.\vspace{0.3cm}
+Quy trình trích xuất dữ liệu với \textit{Google BigQuery} được thực hiện chặt chẽ dựa trên các đặc tả kỹ thuật của Lens Protocol. Toàn bộ các câu lệnh SQL đều áp dụng ràng buộc thời gian nghiêm ngặt dựa trên trường \texttt{created\_on} để giới hạn chính xác phạm vi nghiên cứu trong các phạm vi thời gian đã định. Đồng thời, nhằm tối ưu hóa cấu trúc đồ thị đa tầng và nâng cao chất lượng học biểu diễn, nghiên cứu thực hiện lọc bỏ các nút cô lập, những tài khoản không phát sinh bất kỳ liên kết nào với các tài khoản còn lại trong khung thời gian khảo sát. Thao tác dựa trên nền tảng triết lý về tính chuẩn hóa trong thực nghiệm GNN của Shchur và cộng sự \cite{shchur2018pitfalls}. Theo quan điểm của nghiên cứu này, việc giữ lại các nút cô lập trong tập dữ liệu thực nghiệm có thể dẫn đến giảm hiệu suất của các hàm tổng hợp láng giềng. Đối với hệ thống \textit{SybilSignal}, bước chuẩn hóa này đóng vai trò giúp các mô hình có thể đưa ra các dự đoán dựa trên tri thức cấu trúc mạng lưới thay vì chỉ phụ thuộc vào các thuộc tính định danh đơn thuần.\vspace{0.3cm}
 
-Kết quả định lượng của quá trình tinh lọc này trên ba phạm vi thời gian nghiên cứu được minh họa chi tiết tại \textbf{Hình \ref{fig:NodeFilteringStats}}. Qua đó, có thể thấy số lượng tài khoản có phát sinh hành vi xã hội chiếm tỷ lệ đáng kể, tạo nên một mạng lưới liên kết đủ dày đặc để thực hiện các phân tích đồ thị chuyên sâu.\vspace{0.3cm}
+Kết quả định lượng của quá trình tinh lọc này trên ba phạm vi thời gian nghiên cứu được tổng hợp chi tiết tại \textbf{Bảng \ref{tab:NodeFilteringStats}} và trực quan hóa tại \textbf{Hình \ref{fig:NodeFilteringStats}}. 
+
+\begin{table}[H]
+    \centering
+    \caption{Thống kê số lượng tài khoản trước và sau khi lọc nút cô lập}
+    \label{tab:NodeFilteringStats}
+    \setlength{\tabcolsep}{10pt}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Phạm vi} & \textbf{Ban đầu} & \textbf{Sau khi lọc} & \textbf{Tỷ lệ giữ lại} \\ \hline
+        Tuần  & 445    & 146   & $\approx 32.8\%$ \\ \hline
+        Tháng & 2817   & 1416  & $\approx 50.3\%$ \\ \hline
+        Quý   & 10064  & 4997  & $\approx 49.7\%$ \\ \hline
+    \end{tabular}
+\end{table}
+
+Qua các số liệu trên, số lượng nút sau khi loại bỏ các nút cô lập luôn duy trì ở mức xấp xỉ $30\%$ đến $50\%$ so với lượng dữ liệu thô ban đầu. Đặc biệt khi phạm vi thời gian mở rộng (Tháng và Quý), tỷ lệ tài khoản hoạt động có tính liên kết ổn định quanh ngưỡng $50\%$. Số lượng nút được giữ lại này tạo ra một mạng lưới liên kết đủ dày đặc và chất lượng, đóng vai trò là cơ sở hạ tầng dữ liệu tối ưu để thực hiện các phân tích đồ thị chuyên sâu.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/NodeFilteringStats.png}
-    \caption{Thống kê số lượng tài khoản ban đầu và sau khi lọc nút cô lập}
+    \includegraphics[width=0.9\linewidth]{images/part-02/chap-02/sec-02/NodeFilteringStats.png}
+    \vspace{0.1cm}
+    \caption{Biểu đồ so sánh số lượng tài khoản ban đầu và sau khi lọc nút cô lập}
     \label{fig:NodeFilteringStats}
 \end{figure}
 
@@ -40,35 +58,83 @@ Kết quả định lượng của quá trình tinh lọc này trên ba phạm v
 
 Sau bước tiền lọc các nút cô lập, tập dữ liệu thu được mang những đặc tính đa tầng, phản ánh các khía cạnh hành vi khác nhau trong không gian mạng xã hội phi tập trung. Phần này thực hiện phân tích về quy mô quan hệ và chất lượng thuộc tính nút nhằm thiết lập nền tảng cho việc xây dựng các đặc trưng huấn luyện mô hình.\vspace{0.3cm}
 
-Kết quả thống kê số lượng cạnh sau khi đã thực hiện tạo cạnh đối xứng cho các quan hệ có hướng được trình bày tại \textbf{Hình \ref{fig:MultiLayerEdges}}.
+Kết quả thống kê số lượng cạnh sau khi đã thực hiện tạo cạnh đối xứng cho các quan hệ có hướng được tổng hợp chi tiết tại \textbf{Bảng \ref{tab:MultiLayerEdges}} và trực quan hóa tại \textbf{Hình \ref{fig:MultiLayerEdges}}.
+
+\begin{table}[H]
+    \centering
+    \caption{Thống kê phân bổ số lượng cạnh trên các phạm vi thời gian}
+    \label{tab:MultiLayerEdges}
+    \setlength{\tabcolsep}{8pt}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Phạm vi} & \textbf{Theo dõi} & \textbf{Tương tác} & \textbf{Tương đồng} & \textbf{Đồng sở hữu} \\ \hline
+        Tuần  & 442    & 106    & 60     & 200     \\ \hline
+        Tháng & 7,904  & 3,082  & 1,732  & 32,120  \\ \hline
+        Quý   & 60,488 & 35,252 & 1,822  & 103,454 \\ \hline
+    \end{tabular}
+\end{table}
+
+Dữ liệu cho thấy sự tăng trưởng quy mô cạnh theo cấp số nhân khi mở rộng phạm vi nghiên cứu. Đặc biệt, tầng \textit{Đồng sở hữu} thể hiện sự bùng nổ về số lượng cạnh tại phạm vi Quý với $103,454$ liên kết, cao gấp hơn 500 lần so với phạm vi Tuần ($200$ cạnh). Điều này minh chứng cho sự tồn tại của các cụm Sybil có mối liên kết chặt chẽ về tính sở hữu, vốn là một trong những tín hiệu quan trọng nhất để nhận diện mạng lưới Sybil chuyên nghiệp hoạt động dài hạn.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\linewidth]{images/part-02/chap-02/sec-02/MultiLayerEdgesDistribution.png}
-    \caption{Phân bổ số lượng cạnh của bốn tầng trên các phạm vi thời gian}
+    \vspace{0.1cm}
+    \caption{Biểu đồ phân bổ số lượng cạnh trên các phạm vi thời gian (Thang đo Logarit)}
     \label{fig:MultiLayerEdges}
 \end{figure}
 
-Dữ liệu cho thấy sự tăng trưởng quy mô cạnh theo cấp số nhân khi mở rộng phạm vi nghiên cứu. Đặc biệt, tầng \textit{Đồng sở hữu} thể hiện sự bùng nổ về số lượng cạnh tại phạm vi Quý với $103,454$ liên kết, cao gấp hơn 500 lần so với phạm vi Tuần ($200$ cạnh). Điều này minh chứng cho sự tồn tại của các cụm Sybil có mối liên kết chặt chẽ về tính sở hữu, vốn là một trong những tín hiệu quan trọng nhất để nhận diện mạng lưới Sybil chuyên nghiệp hoạt động dài hạn.\vspace{0.3cm}
+Chất lượng dữ liệu định danh đóng vai trò quyết định đến hiệu quả của quá trình nhúng ngữ nghĩa. Đề tài thực hiện đánh giá hai chỉ số then chốt: Tỷ lệ lấp đầy và Độ dài văn bản trung bình trên ba trường dữ liệu: \texttt{handle}, \texttt{display\_name} và \texttt{bio}. Các số liệu thống kê chi tiết về tỷ lệ lấp đầy qua các phạm vi thời gian được tổng hợp tại \textbf{Bảng \ref{tab:NodeFillRate}} và trực quan hóa tại \textbf{Hình \ref{fig:NodeFillRate}}.
 
-Chất lượng dữ liệu định danh đóng vai trò quyết định đến hiệu quả của quá trình nhúng ngữ nghĩa. Đề tài thực hiện đánh giá hai chỉ số then chốt: Tỷ lệ lấp đầy và Độ dài văn bản trung bình trên ba trường dữ liệu: \texttt{handle}, \texttt{display\_name} và \texttt{bio}.
+\begin{table}[H]
+    \centering
+    \caption{Thống kê tỷ lệ lấp đầy dữ liệu của các trường thuộc tính nút}
+    \label{tab:NodeFillRate}
+    \setlength{\tabcolsep}{10pt}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Phạm vi} & \textbf{\texttt{handle}} & \textbf{\texttt{display\_name}} & \textbf{\texttt{bio}} \\ \hline
+        Tuần  & 100.0\% & 100.0\% & 34.2\% \\ \hline
+        Tháng & 100.0\% & 100.0\% & 26.2\% \\ \hline
+        Quý   & 100.0\% & 100.0\% & 39.3\% \\ \hline
+    \end{tabular}
+\end{table}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\linewidth]{images/part-02/chap-02/sec-02/NodeAttributeFillRate.png}
-    \caption{Thống kê tỷ lệ lấp đầy dữ liệu của các trường thuộc tính nút}
+    \vspace{0.1cm}
+    \caption{Biểu đồ thống kê tỷ lệ lấp đầy dữ liệu của các trường thuộc tính nút}
     \label{fig:NodeFillRate}
 \end{figure}
 
-Kết quả tại \textbf{Hình \ref{fig:NodeFillRate}} cho thấy trong khi \texttt{handle} và \texttt{display\_name} có tỷ lệ lấp đầy tuyệt đối, trường \texttt{bio} lại có độ thưa thớt cao (dao động từ 26.2\% đến 39.3\%). Trong nghiên cứu này, quá trình xây dựng đặc trưng thực hiện ghép nối các trường dữ liệu bao gồm \texttt{handle}, \texttt{display\_name} và \texttt{bio} thành một chuỗi văn bản tổng hợp duy nhất phục vụ cho mô hình nhúng. Mật độ thông tin sau khi ghép nối này được minh họa rõ nét tại \textbf{Hình \ref{fig:FeatureStringLengthStacked}} thông qua độ dài trung bình.
+Kết quả phân tích cho thấy trong khi \texttt{handle} và \texttt{display\_name} luôn đạt tỷ lệ lấp đầy tuyệt đối ($100\%$), trường \texttt{bio} lại có độ thưa thớt khá cao (dao động từ $26.2\%$ đến $39.3\%$). Mặc dù tồn tại sự thiếu hụt thông tin ở trường tiểu sử, quá trình xây dựng đặc trưng trong nghiên cứu này vẫn tiến hành ghép nối cả ba trường dữ liệu (\texttt{handle}, \texttt{display\_name} và \texttt{bio}) thành một chuỗi văn bản tổng hợp duy nhất. Cách tiếp cận này đảm bảo mô hình nhúng SBERT có thể tận dụng tối đa ngữ cảnh tự nhiên của những tài khoản có hồ sơ đầy đủ, đồng thời không bị lỗi khi xử lý các tài khoản khuyết thiếu thông tin. Mật độ thông tin sau khi ghép nối này được tổng hợp chi tiết tại \textbf{Bảng \ref{tab:FeatureStringLength}} và trực quan hóa tại \textbf{Hình \ref{fig:FeatureStringLengthStacked}} thông qua độ dài trung bình (tính bằng số ký tự).
+
+\begin{table}[H]
+    \centering
+    \caption{Thống kê độ dài văn bản trung bình của các trường dữ liệu}
+    \label{tab:FeatureStringLength}
+    \setlength{\tabcolsep}{10pt}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Phạm vi} & \textbf{\texttt{handle}} & \textbf{\texttt{display\_name}} & \textbf{\texttt{bio}} & \textbf{Tổng cộng} \\ \hline
+        Tuần  & 10.2 & 8.4 & 16.2 & \textbf{34.8} \\ \hline
+        Tháng & 11.2 & 9.7 & 15.0 & \textbf{35.9} \\ \hline
+        Quý   & 9.3  & 7.6 & 19.4 & \textbf{36.3} \\ \hline
+    \end{tabular}
+\end{table}
+
+Bằng cách kết hợp các trường dữ liệu, độ dài chuỗi đầu vào cho mô hình nhúng ngữ nghĩa được duy trì ổn định ở mức xấp xỉ 35 ký tự (Ví dụ phạm vi Quý đạt 36.3 ký tự, trong đó đóng góp từ \texttt{bio} là 19.4). Việc duy trì một đặc trưng hồ sơ cá nhân đủ dày giúp mô hình \textit{all-MiniLM-L6-v2} có thể trích xuất các vector đặc trưng có độ phân tách cao, ngay cả đối với các nút có thuộc tính mô tả bị khuyết thiếu.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-02/FeatureStringLengthStacked.png}
-    \caption{Phân bổ độ dài văn bản trung bình trong chuỗi đặc trưng tổng hợp}
+    \vspace{0.1cm}
+    \caption{Biểu đồ phân bổ độ dài văn bản trung bình trong chuỗi đặc trưng tổng hợp}
     \label{fig:FeatureStringLengthStacked}
 \end{figure}
-
-Bằng cách kết hợp các trường dữ liệu, độ dài chuỗi đầu vào cho mô hình nhúng ngữ nghĩa được duy trì ổn định ở mức xấp xỉ 35 ký tự (Ví dụ phạm vi Quý đạt 36.3 ký tự, trong đó đóng góp từ \texttt{bio} là 19.4). Việc duy trì một đặc trưng hồ sơ cá nhân đủ dày giúp mô hình \textit{all-MiniLM-L6-v2} có thể trích xuất các vector đặc trưng có độ phân tách cao, ngay cả đối với các nút có thuộc tính mô tả bị khuyết thiếu.\vspace{0.3cm}
 
 Tổng kết lại, các con số thống kê thô cho thấy tập dữ liệu đã hội đủ các điều kiện cần thiết về quy mô liên kết và độ phong phú đặc trưng trên cả 3 phạm vi dữ liệu để tiến hành các bước tiền xử lý tiếp theo.
