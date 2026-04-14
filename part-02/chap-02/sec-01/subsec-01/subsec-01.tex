@@ -30,22 +30,22 @@
         \centering
         \caption{Bảng ánh xạ 14 loại quan hệ gốc thành 4 tầng đồ thị ngữ nghĩa}
         \label{tab:edge_mapping}
-        \renewcommand{\arraystretch}{1.3}
+        \renewcommand{\arraystretch}{1.4} % Tăng độ thoáng cho dòng để không bị dính sát đường kẻ
         \setlength{\tabcolsep}{8pt}
-        \begin{tabular}{p{3cm} p{9cm} c}
-            \toprule
+        \begin{tabular}{|p{3cm}|p{8cm}|c|}
+            \hline
             \textbf{Tầng đồ thị} & \textbf{Các loại quan hệ gốc} & \textbf{Số lượng} \\
-            \midrule
+            \hline
             \textbf{1. Follow Layer} & \texttt{FOLLOW}, \texttt{FOLLOW\_REV} & 2 \\
-            \midrule
+            \hline
             \textbf{2. Interact Layer} & \texttt{COMMENT}, \texttt{COMMENT\_REV}, \texttt{QUOTE}, \texttt{QUOTE\_REV}, \texttt{UPVOTE}, \texttt{UPVOTE\_REV}, \texttt{COLLECT}, \texttt{COLLECT\_REV}, \texttt{TIP}, \texttt{TIP\_REV} & 10 \\
-            \midrule
+            \hline
             \textbf{3. Similarity Layer} & \texttt{SIMILARITY} (Đồ thị vô hướng) & 1 \\
-            \midrule
+            \hline
             \textbf{4. Co-owner Layer} & \texttt{CO-OWNER} (Đồ thị vô hướng) & 1 \\
-            \midrule
-            \multicolumn{2}{r}{\textbf{Tổng cộng số loại cạnh gốc:}} & \textbf{14} \\
-            \bottomrule
+            \hline
+            \multicolumn{2}{|r|}{\textbf{Tổng cộng số loại cạnh gốc:}} & \textbf{14} \\
+            \hline
         \end{tabular}
     \end{table}
 
