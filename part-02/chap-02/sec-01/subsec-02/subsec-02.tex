@@ -20,7 +20,7 @@ Kiến trúc thực thi được tối ưu để xử lý các yêu cầu truy v
 \begin{itemize}[label={--}, itemsep=1pt]
     \item \textbf{Cơ chế truy xuất và định tuyến:} Hệ thống ưu tiên truy xuất đồ thị tham chiếu có sẵn để giảm thiểu tài nguyên. Đối với tài khoản mới, luồng dữ liệu được định tuyến qua API Lens Protocol để thu thập thông tin tức thời.
     \item \textbf{Thiết kế đồ thị cục bộ:} Thay vì xử lý toàn bộ đồ thị khổng lồ, hệ thống chỉ tái tạo mạng lưới lân cận của \textit{Profile ID} mục tiêu. Thiết kế này giúp khoanh vùng bối cảnh cấu trúc mạng cần thiết, đảm bảo tính giải thích dựa trên các nút láng giềng.
-    \item \textbf{Thực thi dự đoán tách rời:} Luồng dữ liệu cuối cùng được đưa qua lõi dự đoán đã được huấn luyện sẵn. Vector tiềm ẩn từ bộ mã hóa GNN sẽ được đưa vào mô hình phân lớp để xuất ra phán quyết rủi ro cuối cùng theo thời gian thực.
+    \item \textbf{Thực thi dự đoán tách rời:} Luồng dữ liệu cuối cùng được đưa qua lõi dự đoán đã được huấn luyện sẵn. Vector từ bộ mã hóa sẽ được đưa vào mô hình phân lớp để xuất ra phán quyết rủi ro cuối cùng.
 \end{itemize}
 
 \textit{1.2.1. Các mô hình GNN Baseline}\vspace{0.2cm}
@@ -79,7 +79,7 @@ Kiến trúc tổng quát của các mô hình GNN baseline được minh họa 
     \label{fig:DecoupledML}
 \end{figure}
 
-\textit{1.5.1. Cơ chế trích xuất đặc trưng và chuẩn hóa}\vspace{0.2cm}
+\textit{a. Cơ chế trích xuất đặc trưng và chuẩn hóa}\vspace{0.2cm}
 
 \indent Để khắc phục tình trạng hiện tượng các mạng nơ-ron gặp khó khăn trong việc điều chỉnh biên độ đầu ra một cách chính xác do sai lệch về phạm vi dự đoán, nghiên cứu này tận dụng GNN như một bộ trích xuất biểu diễn cấu trúc:
 
@@ -89,7 +89,7 @@ Kiến trúc tổng quát của các mô hình GNN baseline được minh họa 
     \item \textbf{Chuẩn hóa đặc trưng:} Sử dụng \textit{StandardScaler} để điều chỉnh quy mô các giá trị về phân phối chuẩn, tạo điều kiện cho bộ phân lớp máy học phía sau thiết lập các siêu phẳng phân tách hiệu quả hơn.
 \end{itemize}
 
-\textit{1.5.2. Bộ phân lớp dựa trên Machine Learning}\vspace{0.2cm}
+\textit{b. Bộ phân lớp dựa trên Machine Learning}\vspace{0.2cm}
 
 Thay vì bắt mạng nơ-ron phải tự học các quy tắc phân ngưỡng phức tạp, nghiên cứu thực hiên đưa các vector biểu diễn đồ thị sang các thuật toán học máy truyền thống để xây dựng các ranh giới phân quyết rõ ràng. Các mô hình được thiết lập cấu hình chuyên biệt để xử lý vector nhúng $16$ chiều và phân tách $4$ cấp độ rủi ro:
 

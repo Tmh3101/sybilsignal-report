@@ -121,7 +121,7 @@ Kiến trúc mã hóa bao gồm hai tầng tích chập:
     \item \textbf{Tầng tích chập thứ hai (Conv2):} Nhận vector $128$ chiều làm đầu vào và thiết lập cơ chế chú ý đơn ($1$ head). Cấu hình này ép buộc mô hình tổng hợp các góc nhìn từ tầng trước để nén thông tin thành vector tiềm ẩn cuối cùng $Z \in \mathbb{R}^{N \times 16}$.
 \end{itemize}
 
-Thay vì sử dụng một mạng nơ-ron phức tạp, bộ giải mã của GAE tính toán tích vô hướng giữa các vector embedding của các cặp nút ($Z_i \cdot Z_j$) để dự đoán xác suất tồn tại của một cạnh nối giữa chúng. Đầu ra của hệ thống được đánh giá thông qua hàm lỗi tái tạo dựa trên Binary Cross-Entropy (BCE). Khung học không giám sát này sẽ liên tục sử dụng sai số tái tạo để lan truyền ngược, ép các trọng số của GATv2 phải điều chỉnh sao cho đồ thị tái tạo từ không gian tiềm ẩn gần giống nhất với đồ thị đa quan hệ gốc ban đầu.\vspace{0.3cm}
+Thay vì sử dụng một mạng nơ-ron phức tạp, bộ giải mã của GAE tính toán tích vô hướng giữa các vector embedding của các cặp nút ($Z_i \cdot Z_j$) để dự đoán xác suất tồn tại của một cạnh nối giữa chúng. Đầu ra được đánh giá thông qua hàm lỗi tái tạo dựa trên Binary Cross-Entropy (BCE). GAE sẽ liên tục sử dụng sai số tái tạo để lan truyền ngược, ép các trọng số của GATv2 phải điều chỉnh sao cho đồ thị tái tạo từ không gian tiềm ẩn gần giống nhất với đồ thị đa quan hệ gốc ban đầu.\vspace{0.3cm}
 
 \textbf{Đầu ra cuối cùng:} Sau khi kết thúc quá trình tối ưu hóa, mô hình trích xuất ma trận có kích thước $N \times 16$. Ma trận này chứa đựng toàn bộ tri thức về cấu trúc mạng lưới của đồ thị, đóng vai trò là đầu vào tiên quyết cho quy trình phân cụm và gán nhãn giả lập phía sau.\vspace{0.3cm}
 
@@ -163,16 +163,16 @@ Hệ thống vận hành 6 quy tắc kiểm tra song song, bao gồm việc tín
 
 Kế thừa bản chất định nghĩa của 04 nhóm rủi ro đã được phân tích lý thuyết tại Mục 2.5 (Chương 1), phân hệ này tiến hành cài đặt hàm phân ngưỡng mờ. Điểm đặc thù của mạng lưới Web3 là ranh giới giữa người dùng thật và các tài khoản Sybil tinh vi thường không rõ ràng, tạo ra các vùng giao thoa hành vi. \vspace{0.3cm}
 
-Để giải quyết vấn đề này, điểm rủi ro liên tục ($0-100$) tổng hợp từ hệ luật chuyên gia được phân phối qua các hàm liên thuộc (Membership Functions) và ánh xạ cứng thành các nhãn rời rạc. Cấu hình tham số cắt ngưỡng thực tế được minh họa trực quan tại \textbf{Hình \ref{fig:FuzzyDistribution}} và liệt kê cụ thể như sau:
+Để giải quyết vấn đề này, điểm rủi ro liên tục ($0-100$) tổng hợp từ hệ luật chuyên gia được phân phối qua các hàm liên thuộc và ánh xạ cứng thành các nhãn rời rạc. Cấu hình tham số cắt ngưỡng thực tế được minh họa trực quan tại \textbf{Hình \ref{fig:FuzzyDistribution}} và liệt kê cụ thể như sau:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{images/part-02/chap-02/sec-01/FuzzyLabelingDistribution.png}
+    \includegraphics[width=0.75\linewidth]{images/part-02/chap-02/sec-01/FuzzyLabelingDistribution.png}
     \caption{Trực quan hóa sự giao thoa hành vi và các ngưỡng phân lớp mờ}
     \vspace{0.1cm}
     \label{fig:FuzzyDistribution}
 \end{figure}
-\vspace{0.3cm}
+
 \begin{itemize}[label={--}, itemsep=1pt]
     \item \texttt{Risk Score} $\leq 20$: Phân loại \texttt{BENIGN} (Vùng an toàn, đỉnh phân phối của người dùng thật).
     \item $20 <$ \texttt{Risk Score} $\leq 50$: Phân loại \texttt{LOW\_RISK} (Vùng đáng ngờ nhẹ, độ giao thoa thấp).
