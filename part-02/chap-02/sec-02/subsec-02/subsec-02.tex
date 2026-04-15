@@ -142,7 +142,7 @@ Số lượng nhãn \texttt{MALICIOUS} tăng mạnh từ phạm vi Tuần (07 th
 
 Sự chênh lệch đáng kể về số lượng giữa các lớp hành vi, đặc biệt là sự thiểu số của lớp \texttt{MALICIOUS}. Để khắc phục, đề tài áp dụng sử dụng trọng số lớp trong hàm mất mát. Trọng số được tính toán nghịch đảo với tần suất xuất hiện của mỗi lớp trong tập huấn luyện, buộc mô hình phải tăng cường sự tập trung vào các nhóm thực thể rủi ro cao.\vspace{0.3cm}
 
-Chi tiết các giá trị trọng số được áp dụng cho từng phạm vi dữ liệu được trình bày tại \textbf{Bảng \ref{tab:ClassWeights}}. Có thể thấy tại phạm vi Quý, lớp \texttt{MALICIOUS} được gán trọng số $3.8634$, cao hơn gấp 8 lần so với lớp \texttt{HIGH\_RISK} ($0.4786$), giúp đảm bảo độ nhạy trong việc nhận diện Sybil.
+Chi tiết các giá trị trọng số được áp dụng cho từng phạm vi dữ liệu được trình bày tại \textbf{Bảng \ref{tab:ClassWeights}} và trực quan hóa xu hướng tại \textbf{Hình \ref{fig:ClassWeightsLine}}. Có thể thấy tại phạm vi Quý, lớp \texttt{MALICIOUS} được gán trọng số $3.8634$, cao hơn gấp 8 lần so với lớp \texttt{HIGH\_RISK} ($0.4786$), giúp đảm bảo độ nhạy trong việc nhận diện Sybil.
 
 \begin{table}[H]
     \centering
@@ -159,9 +159,17 @@ Chi tiết các giá trị trọng số được áp dụng cho từng phạm vi
     \end{tabular}
 \end{table}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/part-02/chap-02/sec-02/ClassWeightsLine.png}
+    \vspace{0.1cm}
+    \caption{Xu hướng biến động trọng số lớp qua các phạm vi dữ liệu}
+    \label{fig:ClassWeightsLine}
+\end{figure}
+
 \textit{2.4.2. Phân chia tập dữ liệu}\vspace{0.2cm}
 
-Toàn bộ các thực thể trong mỗi phạm vi nghiên cứu được phân chia theo tỷ lệ cố định: 60\% dành cho huấn luyện (\textit{Train}), 20\% cho đánh giá (\textit{Validation}) và 20\% cho kiểm thử (\textit{Test}). Dữ liệu thực nghiệm tại phạm vi Quý ghi nhận quy mô lớn nhất với 2998 nút huấn luyện và 1000 nút kiểm thử, tạo điều kiện thuận lợi cho việc kiểm chứng khả năng tổng quát hóa của hệ thống trên dữ liệu thực tế quy mô lớn. Chi tiết phân bổ quy mô dữ liệu qua các phạm vi được tổng hợp tại \textbf{Bảng \ref{tab:DataSplitSize}}.
+Toàn bộ các thực thể trong mỗi phạm vi nghiên cứu được phân chia theo tỷ lệ cố định: 60\% dành cho huấn luyện (\textit{Train}), 20\% cho đánh giá (\textit{Validation}) và 20\% cho kiểm thử (\textit{Test}). Dữ liệu thực nghiệm tại phạm vi Quý ghi nhận quy mô lớn nhất với 2998 nút huấn luyện và 1000 nút kiểm thử, tạo điều kiện thuận lợi cho việc kiểm chứng khả năng tổng quát hóa của hệ thống trên dữ liệu thực tế quy mô lớn. Chi tiết phân bổ quy mô dữ liệu qua các phạm vi được tổng hợp tại \textbf{Bảng \ref{tab:DataSplitSize}} và minh họa trực quan tại \textbf{Hình \ref{fig:DataSplitPie}}.
 
 \begin{table}[H]
     \centering
@@ -177,3 +185,11 @@ Toàn bộ các thực thể trong mỗi phạm vi nghiên cứu được phân 
         Quý   & 2998 & 999 & 1000 & 4997 \\ \hline
     \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/part-02/chap-02/sec-02/DataSplitSolidPie.png}
+    \vspace{0.1cm}
+    \caption{Tỷ lệ phân chia chuẩn và quy mô tuyệt đối của các tập dữ liệu}
+    \label{fig:DataSplitPie}
+\end{figure}
