@@ -43,7 +43,7 @@ Quy trình xây dựng nhãn giả lập sử dụng mô hình GAE với Encoder
 
 Để đảm bảo tính khách quan, giảm thiểu sự ảnh hưởng của việc khởi tạo ngẫu nhiên và khẳng định khả năng tái lập, mỗi mô hình Baseline được huấn luyện và đánh giá lặp lại độc lập 05 lần với các hạt giống ngẫu nhiên cố định. Kết quả hiệu năng cuối cùng của mỗi mô hình được báo cáo dưới dạng giá trị trung bình cộng của các lượt chạy.\vspace{0.2cm}
 
-Quá trình huấn luyện áp dụng chung một bộ thiết lập siêu tham số và kỹ thuật như sau:
+Quá trình huấn luyện áp dụng chung một bộ thiết lập siêu tham số như sau:
 \begin{itemize}[label={--}, itemsep=1pt]
     \item \textbf{Cấu hình tham số tối ưu:} 
     \begin{itemize}[label={+}, itemsep=1pt]
@@ -53,7 +53,7 @@ Quá trình huấn luyện áp dụng chung một bộ thiết lập siêu tham 
         \item \textit{Max Epochs}: 2000.
     \end{itemize}
     
-    \item \textbf{Hàm mất mát:} Đề tài sử dụng hàm \textit{Weighted Cross-Entropy}. Thay vì tính lỗi đồng đều cho mọi mẫu dữ liệu, hàm này tích hợp trực tiếp các giá trị \textit{Class Weights} (đã được tính toán dựa trên phân phối thực tế của từng phạm vi ở Chương 2).
+    \item \textbf{Hàm mất mát:} Đề tài sử dụng hàm \textit{Weighted Cross-Entropy}. Thay vì tính lỗi đồng đều cho mọi mẫu dữ liệu, hàm này tích hợp trực tiếp các giá trị \textit{Class Weights} (đã được tính toán ở Chương 2).
     
     \item \textbf{Cơ chế dừng sớm:} Để tối ưu hóa thời gian huấn luyện và lưu lại phiên bản mô hình có khả năng tổng quát hóa tốt nhất, hệ thống giám sát liên tục chỉ số \textit{Macro F1-Score} trên tập kiểm định. Cơ chế dừng sớm được kích hoạt với ngưỡng kiên nhẫn \textit{patience} = 200. Nghĩa là, nếu sau 200 epoch liên tiếp mà chỉ số \textit{Validation Macro F1} không ghi nhận kỷ lục mới, quá trình huấn luyện sẽ tự động chấm dứt.
 \end{itemize}

@@ -1,6 +1,6 @@
 \chapter{PHỤ LỤC A. KẾT QUẢ KIỂM THỬ VỚI CÁC KIẾN TRÚC DECOUPLED GNN-ML}
 
-\indent\indent Phụ lục này trình bày toàn bộ kết quả thực nghiệm của 20 tổ hợp kiến trúc phân lớp tách rời (Decoupled GNN-ML). Không gian thực nghiệm bao gồm 05 GNN backbone (GAT, GCN, GINE, PNA và Transformer) kết hợp với 04 mô hình học máy truyền thống (KNN, Linear SVC, Random Forest và XGBoost) trên ba phạm vi thời gian: Tuần, Tháng và Quý.\vspace{.3cm}
+\indent\indent Phụ lục này trình bày toàn bộ kết quả thực nghiệm của 20 tổ hợp kiến trúc phân lớp tách rời (Decoupled GNN-ML). Không gian thực nghiệm bao gồm 05 GNN backbone (GATv2, GCN, GINE, PNA và Transformer) kết hợp với 04 mô hình học máy truyền thống (KNN, Linear SVC, Random Forest và XGBoost) trên ba phạm vi thời gian: Tuần, Tháng và Quý.\vspace{.3cm}
 
 Các giá trị được báo cáo là trung bình kèm theo độ lệch chuẩn sau 05 lượt chạy độc lập. Độ lệch chuẩn được ghi nhận bằng $0$ đối với KNN, Linear SVC và XGBoost do tính chất tất định của các thuật toán này trên cùng một phân vùng dữ liệu. Riêng Random Forest có độ biến thiên nội tại do cơ chế lấy mẫu ngẫu nhiên.
 
@@ -25,7 +25,7 @@ Các giá trị được báo cáo là trung bình kèm theo độ lệch chuẩ
  & & \textbf{Accuracy} & \textbf{Macro F1} & \textbf{Accuracy} & \textbf{Macro F1} & \textbf{Accuracy} & \textbf{Macro F1} \\
 \midrule
 
-\multirow{4}{*}{\textbf{GAT}}
+\multirow{4}{*}{\textbf{GATv2}}
 & KNN            & $.9667 \pm .0000$ & $.9776 \pm .0000$ 
                  & $.9472 \pm .0000$ & $.9272 \pm .0000$ 
                  & $.9180 \pm .0000$ & $.8838 \pm .0000$ \\
