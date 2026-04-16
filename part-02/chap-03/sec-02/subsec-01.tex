@@ -2,7 +2,7 @@
 
 \textit{2.1.1. Tham số mô hình, siêu tham số và kỹ thuật huấn luyện}\vspace{0.2cm}
 
-\indent Trong quá trình thực nghiệm, đề tài áp dụng hai chiến lược huấn luyện khác nhau tùy thuộc vào kiến trúc mô hình. Đối với các mô hình GNN cơ sở, quy trình huấn luyện được thực hiện theo phương thức học có giám sát từ đầu đến cuối. Ngược lại, đối với kiến trúc \textit{Decoupled GNN-ML}, hệ thống sử dụng GNN như một bộ trích xuất đặc trưng tĩnh bằng cách đóng băng toàn bộ trọng số sau khi đã tối ưu hóa, sau đó trích xuất các vector embedding để huấn luyện các bộ phân lớp máy học truyền thống.\vspace{0.3cm}
+\indent Trong quá trình thực nghiệm, đề tài áp dụng hai chiến lược huấn luyện khác nhau tùy thuộc vào kiến trúc mô hình. Đối với các mô hình GNN cơ sở, quy trình huấn luyện được thực hiện theo phương thức học có giám sát từ đầu đến cuối. Ngược lại, đối với kiến trúc \textit{Decoupled GNN-ML}, hệ thống sử dụng GNN như một bộ trích xuất đặc trưng để huấn luyện các bộ phân lớp máy học truyền thống.\vspace{0.3cm}
 
 \textbf{* Thống kê tham số mô hình:}
 Đối với các mô hình GNN cơ sở được huấn luyện từ đầu, toàn bộ các trọng số đều tham gia vào quá trình tối ưu hóa. Chi tiết độ phức tạp của các mạng GNN được trình bày tại \textbf{Bảng \ref{tab:ModelParamsComp}}.
@@ -36,7 +36,7 @@
 Quy trình xây dựng nhãn giả lập sử dụng mô hình GAE với Encoder là GATv2 (32 hidden units, 4 heads) để nén đặc trưng về không gian 16 chiều. Chiến lược huấn luyện và phân cụm được tùy chỉnh theo từng phạm vi dữ liệu:
 \begin{itemize}[label={--}, itemsep=1pt]
     \item \textbf{Phạm vi Tuần/Tháng:} Huấn luyện trong 1000 epoch; Adam optimizer ($lr=0.005$); Early stopping với $patience=100$. Thuật toán KMeans thực hiện tìm kiếm số cụm $K$ tối ưu trong khoảng $[5, 15]$ cho phạm vi tuần và $[110, 130]$ cho phạm vi tháng.
-    \item \textbf{Phạm vi Quý:} Do quy mô đồ thị lớn và phức tạp hơn, số epoch được tăng lên 5000; ngưỡng dừng sớm $patience=200$; tối ưu số cụm $K$ trong khoảng $[160, 180]$.
+    \item \textbf{Phạm vi Quý:} Do quy mô đồ thị lớn, số epoch được tăng lên 5000; ngưỡng dừng sớm $patience=200$; tối ưu số cụm $K$ trong khoảng $[160, 180]$.
 \end{itemize}
 
 \textbf{* Siêu tham số và kỹ thuật huấn luyện GNN cơ sở:}\vspace{0.2cm}
